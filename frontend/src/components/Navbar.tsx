@@ -29,7 +29,7 @@ const navItems: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "search", label: "Web Search", icon: Search },
 ];
 
-export function Navbar({ activeTab, onTabChange, isProcessing }: NavbarProps) {
+export function Navbar({ activeTab, onTabChange, isProcessing, onProvidersClick }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -93,16 +93,6 @@ export function Navbar({ activeTab, onTabChange, isProcessing }: NavbarProps) {
             </button>
             <ThemeToggle />
             <div className="w-px h-5 bg-border" />
-            <a
-              href="http://127.0.0.1:8000/docs"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.05] transition-all duration-150 border border-white/[0.05]"
-            >
-              <Code className="w-3 h-3" />
-              API Docs
-            </a>
-          </div>
             <a
               href="http://127.0.0.1:8000/docs"
               target="_blank"
