@@ -1,0 +1,64 @@
+# General
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv
+*.egg-info/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+
+# Output
+output/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+node_modules/
+.next/
+out/
+
+# Design-sync
+.ds-sync/
+ds-bundle/
+
+# Claude internal files
+.claude/**/*.lock
+.claude/mind.mv2
+
+# Playwright test artifacts
+.playwright-mcp/
+
+# Blackbox skills
+.blackbox/
+
+# Claude worktrees (embedded git repos)
+.claude/worktrees/
+.claude/mind.mv2
+.claude/mind.mv2.lock
+
+# Generated AI images
+Gemini_Generated_Image_*.jpg
+
+# OS junk
+$null
+Copy-Item/
+-Force/
+-Recurse/

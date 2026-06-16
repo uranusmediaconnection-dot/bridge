@@ -1,0 +1,21 @@
+{
+  "name": "bridgenton-web-scraper",
+  "version": "1.0.0",
+  "description": "Professional web scraping tool with Hero UI PRO Dark theme",
+  "scripts": {
+    "install-all": "cd frontend && npm install",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && python main.py",
+    "build": "cd frontend && npm run build"
+  },
+  "keywords": [
+    "web-scraper",
+    "scraping",
+    "hero-ui",
+    "nextjs",
+    "fastapi",
+    "python"
+  ],
+  "author": "",
+  "license": "MIT"
+}
