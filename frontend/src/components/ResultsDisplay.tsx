@@ -7,7 +7,6 @@ import {
   Link as LinkIcon,
   Image,
   Calendar,
-  CheckCircle,
   XCircle,
   ExternalLink,
   Search,

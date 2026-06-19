@@ -12,16 +12,25 @@ requests>=2.31.0
 beautifulsoup4>=4.12.0
 lxml>=5.1.0
 html5lib>=1.1
+httpx[http2]>=0.28.0
+
+# Stealth & Anti-Detection
+curl-cffi>=0.15.0
 
 # Browser Automation
 selenium>=4.18.0
 webdriver-manager>=4.0.0
 
+# Email Validation
+dnspython>=2.8.0
+email-validator>=2.3.0
+
+# Phone Validation
+phonenumbers>=9.0.0
+
 # Utilities
 python-dotenv>=1.0.0
 aiohttp>=3.9.0
 fake-useragent>=1.4.0
-
-# Optional: For advanced scraping
-# scrapy>=2.11.0
-# playwright>=1.44.0
+tenacity>=8.2.0
+loguru>=0.7.0

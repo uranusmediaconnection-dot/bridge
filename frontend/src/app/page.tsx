@@ -8,6 +8,7 @@ import { OctopusAnimation } from "../components/OctopusAnimation";
 import { Bot, Cpu } from "lucide-react";
 import { SearchPanel } from "../components/SearchPanel";
 import { SwarmDashboard } from "../components/SwarmDashboard";
+import { LeadIntelPanel } from "../components/LeadIntelPanel";
 import { ScrapeResponse, SearchResult } from "../lib/api";
 import {
   Code,
@@ -85,6 +86,18 @@ export default function Home() {
               />
             </motion.div>
           )}
+
+          {activeTab === "leads" && (
+            <motion.div
+              key="leads"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            >
+              <LeadIntelPanel />
+            </motion.div>
+          )}
         </AnimatePresence>
       </main>
 
@@ -99,7 +112,7 @@ export default function Home() {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <img
-                  src="/logo.png"
+                  src="/octopus-logo.png"
                   alt="Web Intelligence Logo"
                   className="w-7 h-7 rounded-lg object-cover"
                   onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}

@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
-  Globe,
   Search,
   Bot,
   Activity,
@@ -47,6 +46,40 @@ const metrics = [
   { label: "AI Agents", value: "4", icon: Cpu, color: "text-accent/70" },
   { label: "API Endpoints", value: "5+", icon: Database, color: "text-primary/60" },
 ];
+function Card3D({ children, className = "", style = {} }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const rx = useSpring(useTransform(my, [-0.5, 0.5], [6, -6]), { stiffness: 300, damping: 40 });
+  const ry = useSpring(useTransform(mx, [-0.5, 0.5], [-8, 8]), { stiffness: 300, damping: 40 });
+  const brightness = useSpring(useTransform(mx, [-0.5, 0.5], [0.97, 1.04]), { stiffness: 300, damping: 40 });
+
+  const onMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return;
+    mx.set((e.clientX - r.left) / r.width - 0.5);
+    my.set((e.clientY - r.top) / r.height - 0.5);
+  }, [mx, my]);
+
+  const onLeave = useCallback(() => { mx.set(0); my.set(0); }, [mx, my]);
+
+  return (
+    <motion.div
+      ref={ref}
+      onMouseMove={onMove}
+      onMouseLeave={onLeave}
+      style={{
+        rotateX: rx, rotateY: ry, filter: brightness ? undefined : undefined,
+        transformStyle: "preserve-3d",
+        perspective: "800px",
+        ...style,
+      }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 export function DashboardOverview({ onNavigate }: DashboardOverviewProps) {
   const [apiStatus, setApiStatus] = useState<"checking" | "online" | "offline">("checking");
@@ -86,7 +119,7 @@ export function DashboardOverview({ onNavigate }: DashboardOverviewProps) {
           {/* Logo in hero */}
           <div className="mb-6">
             <img
-              src="/logo.png"
+              src="/octopus-logo.png"
               alt="Bringenton-Cosmic Logo"
               className="w-16 h-16 rounded-2xl object-cover shadow-lg shadow-cyan-500/20"
               onError={(e) => {
@@ -168,16 +201,19 @@ export function DashboardOverview({ onNavigate }: DashboardOverviewProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.08 * i, ease: [0.23, 1, 0.32, 1] }}
-            className="stat-card"
           >
-            <div className="flex items-center justify-between mb-3">
-              <metric.icon className={`w-5 h-5 ${metric.color}`} />
-              <TrendingUp className="w-4 h-4 text-green-500/80" />
-            </div>
-            <div className="text-2xl font-bold text-foreground mb-1">
-              {metric.value}
-            </div>
-            <div className="text-sm text-muted-foreground">{metric.label}</div>
+            <Card3D className="stat-card h-full cursor-default">
+              <div className="flex items-center justify-between mb-3">
+                <metric.icon className={`w-5 h-5 ${metric.color}`} />
+                <TrendingUp className="w-4 h-4 text-green-500/80" />
+              </div>
+              <div className="text-2xl font-bold text-foreground mb-1">
+                {metric.value}
+              </div>
+              <div className="text-sm text-muted-foreground">{metric.label}</div>
+              {/* 3D inner sheen */}
+              <div className="absolute inset-0 rounded-xl pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%)", transform: "translateZ(4px)" }} />
+            </Card3D>
           </motion.div>
         ))}
       </div>
@@ -187,51 +223,65 @@ export function DashboardOverview({ onNavigate }: DashboardOverviewProps) {
         {features.map((feature, i) => {
           const Icon = feature.icon;
           return (
-            <motion.button
+            <motion.div
               key={feature.key}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.08 * i, ease: [0.23, 1, 0.32, 1] }}
-              onClick={() => onNavigate(feature.key)}
-              className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card p-6 text-left
-                hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5
-                active:scale-[0.99]"
-              style={{ transition: "transform 200ms cubic-bezier(0.23,1,0.32,1), box-shadow 200ms cubic-bezier(0.23,1,0.32,1), border-color 200ms cubic-bezier(0.23,1,0.32,1)" }}
             >
-              {/* Gradient accent bar */}
-              <div
-                className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.gradient} opacity-60 group-hover:opacity-100`}
-                style={{ transition: "opacity 300ms cubic-bezier(0.23,1,0.32,1)" }}
-              />
-
-              <div
-                className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 shadow-lg`}
+              <Card3D
+                className="group relative overflow-hidden rounded-2xl border border-border/50 bg-card cursor-pointer w-full text-left"
+                style={{ display: "block" }}
               >
-                <Icon className="w-6 h-6 text-white" />
-              </div>
+                <button
+                  onClick={() => onNavigate(feature.key)}
+                  className="w-full text-left p-6"
+                  style={{ background: "none", border: "none" }}
+                >
+                  {/* Gradient accent bar */}
+                  <div
+                    className={`absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r ${feature.gradient} opacity-70 group-hover:opacity-100 transition-opacity duration-300`}
+                  />
 
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                {feature.title}
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
-                {feature.description}
-              </p>
+                  {/* Neon spotlight on hover */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" style={{
+                    background: `radial-gradient(350px circle at 50% 0%, rgba(45,212,191,0.07), transparent 70%)`,
+                  }} />
 
-              <div className="flex flex-wrap gap-2">
-                {feature.stats.map((stat) => (
-                  <span
-                    key={stat}
-                    className="px-2.5 py-1 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground"
-                  >
-                    {stat}
-                  </span>
-                ))}
-              </div>
+                  {/* 3D sheen layer */}
+                  <div className="absolute inset-0 pointer-events-none rounded-2xl" style={{
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 55%)",
+                    transform: "translateZ(6px)",
+                  }} />
 
-              <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100" style={{ transition: "opacity 200ms cubic-bezier(0.23,1,0.32,1)" }}>
-                <ArrowRight className="w-5 h-5 text-primary" />
-              </div>
-            </motion.button>
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 shadow-lg`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+                    {feature.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2">
+                    {feature.stats.map((stat) => (
+                      <span
+                        key={stat}
+                        className="px-2.5 py-1 rounded-lg bg-muted/50 border border-border/50 text-xs text-muted-foreground"
+                      >
+                        {stat}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <ArrowRight className="w-5 h-5 text-primary" />
+                  </div>
+                </button>
+              </Card3D>
+            </motion.div>
           );
         })}
       </div>

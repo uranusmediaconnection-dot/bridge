@@ -21,6 +21,13 @@ ENV/
 # Environment
 .env
 .env.local
+.env.*
+
+# Database
+database.db
+
+# Build artifacts
+tsconfig.tsbuildinfo
 
 # Output
 output/

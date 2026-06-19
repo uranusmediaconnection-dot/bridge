@@ -150,3 +150,147 @@ export const scraperAPI = {
     return response.data;
   },
 };
+
+// ============================================================
+// NEW: Validation & Enrichment API
+// ============================================================
+
+export interface EmailValidationResult {
+  email: string;
+  valid: boolean;
+  confidence: number;
+  is_disposable: boolean;
+  is_free_provider: boolean;
+  checks: Record<string, any>;
+  flags: string[];
+}
+
+export interface PhoneValidationResult {
+  raw: string;
+  valid: boolean;
+  possible: boolean;
+  e164: string | null;
+  national: string | null;
+  international: string | null;
+  country_code: number | null;
+  region: string | null;
+  carrier: string | null;
+  line_type: string;
+  timezone: string[];
+  geocoded: string | null;
+  error: string | null;
+}
+
+export interface LeadEmail {
+  email: string;
+  valid: boolean;
+  confidence: number;
+  is_disposable: boolean;
+  is_free_provider: boolean;
+}
+
+export interface LeadPhone {
+  number: string;
+  valid: boolean;
+  e164: string | null;
+  national: string | null;
+  carrier: string | null;
+  line_type: string;
+  location: string | null;
+  timezone: string[];
+}
+
+export interface DomainEnrichmentResult {
+  domain: string;
+  enriched_at: string;
+  emails: LeadEmail[];
+  phones: LeadPhone[];
+  social_profiles: Record<string, string[]>;
+  tech_stack: Record<string, string | null>;
+  company_info: Record<string, any>;
+}
+
+export interface EmailDiscoveryResult {
+  domain: string;
+  discovered_emails: string[];
+  guessed_patterns: string[];
+  generated_patterns?: string[];
+  confidence: string;
+}
+
+export const validationAPI = {
+  async validateEmails(emails: string[], doSmtp = false): Promise<{
+    success: boolean;
+    total: number;
+    valid_count: number;
+    invalid_count: number;
+    results: EmailValidationResult[];
+  }> {
+    const response = await api.post("/validate/email", { emails, do_smtp: doSmtp });
+    return response.data;
+  },
+
+  async validatePhones(numbers: string[], region = "US"): Promise<{
+    success: boolean;
+    total: number;
+    valid_count: number;
+    invalid_count: number;
+    results: PhoneValidationResult[];
+  }> {
+    const response = await api.post("/validate/phone", { numbers, region });
+    return response.data;
+  },
+};
+
+export const enrichmentAPI = {
+  async enrichDomain(domain: string): Promise<{
+    success: boolean;
+    result: DomainEnrichmentResult;
+  }> {
+    const response = await api.post("/enrich/domain", { domain });
+    return response.data;
+  },
+
+  async enrichBatch(domains: string[]): Promise<{
+    success: boolean;
+    total: number;
+    results: DomainEnrichmentResult[];
+  }> {
+    const response = await api.post("/enrich/batch", { domains });
+    return response.data;
+  },
+
+  async discoverEmails(
+    domain: string,
+    knownNames?: { first: string; last: string }[]
+  ): Promise<{
+    success: boolean;
+    result: EmailDiscoveryResult;
+  }> {
+    const response = await api.post("/discovery/emails", {
+      domain,
+      known_names: knownNames,
+    });
+    return response.data;
+  },
+};
+
+export const proxyPoolAPI = {
+  async refresh(): Promise<{
+    success: boolean;
+    new_proxies: number;
+    total_proxies: number;
+    stats: Record<string, any>;
+  }> {
+    const response = await api.post("/proxies/refresh");
+    return response.data;
+  },
+
+  async getStats(): Promise<{
+    success: boolean;
+    stats: Record<string, any>;
+  }> {
+    const response = await api.get("/proxies/stats");
+    return response.data;
+  },
+};

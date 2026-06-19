@@ -4,18 +4,17 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "./ThemeToggle";
 import {
-  Globe,
   Search,
   Bot,
-  Sparkles,
   Menu,
   X,
   Code,
-  Zap,
   Cpu,
+  Users,
 } from "lucide-react";
+import { EyeLogo } from "./EyeLogo";
 
-export type TabKey = "scraper" | "search";
+export type TabKey = "scraper" | "search" | "leads";
 
 interface NavbarProps {
   activeTab: TabKey;
@@ -27,6 +26,7 @@ interface NavbarProps {
 const navItems: { key: TabKey; label: string; icon: React.ElementType }[] = [
   { key: "scraper", label: "Swarm Agent", icon: Bot },
   { key: "search", label: "Web Search", icon: Search },
+  { key: "leads", label: "Lead Intel", icon: Users },
 ];
 
 export function Navbar({ activeTab, onTabChange, isProcessing, onProvidersClick }: NavbarProps) {
@@ -42,9 +42,7 @@ export function Navbar({ activeTab, onTabChange, isProcessing, onProvidersClick 
             className="flex items-center gap-3 group"
           >
             <div className="relative">
-              <div className="w-9 h-9 rounded-xl bg-primary/15 flex items-center justify-center group-hover:bg-primary/20 transition-colors duration-200">
-                <Zap className="w-4 h-4 text-primary" />
-              </div>
+              <EyeLogo size={36} />
               <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-primary rounded-full border-[1.5px] border-background animate-pulse" />
             </div>
             <div className="hidden sm:block text-left">

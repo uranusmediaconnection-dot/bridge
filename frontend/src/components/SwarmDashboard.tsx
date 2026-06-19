@@ -20,7 +20,6 @@ import {
   MessageSquare,
   Send,
   Globe,
-  Activity,
   Download,
   RotateCcw,
 } from "lucide-react";
