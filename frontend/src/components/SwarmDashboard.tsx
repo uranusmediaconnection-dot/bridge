@@ -542,188 +542,52 @@ export function SwarmDashboard({ onComplete }: SwarmDashboardProps) {
           </div>
 
           {/* ── Mobile Agent Cards ────────────────────────────── */}
-          <div className="grid grid-cols-2 gap-2 mb-4 xl:hidden">
-            {agents.map((agent) => {
-              const AgentIcon = agent.icon;
-              return (
-                <div
-                  key={agent.id}
-                  className={`flex items-center gap-2 p-2.5 rounded-xl border transition-all duration-200 ease-out ${
-                    agent.status === "running"
-                      ? "border-primary/20 bg-primary/[0.04]"
-                      : agent.status === "completed"
-                      ? "border-emerald-500/20 bg-emerald-500/[0.04]"
-                      : "border-white/[0.05] bg-white/[0.02]"
-                  }`}
-                >
-                  <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${agent.gradient} flex items-center justify-center shrink-0`}>
-                    <AgentIcon className="w-3.5 h-3.5 text-white" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-semibold text-foreground truncate">{agent.name}</p>
-                    <div className="flex items-center gap-1">
-                      <div
-                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                          agent.status === "completed"
-                            ? "bg-emerald-500"
-                            : agent.status === "running"
-                            ? "bg-primary"
-                            : agent.status === "error"
-                            ? "bg-pink-500"
-                            : "bg-white/20"
-                        }`}
-                        style={agent.status === "running" ? { animation: "agent-glow 1s ease-in-out infinite" } : {}}
-                      />
-                      <p className="text-[9px] text-muted-foreground truncate capitalize">
-                        {agent.status === "running" ? agent.message : agent.status}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* ── SVG Agent Network (xl+) ───────────────────────── */}
-          <div
-            ref={swarmGraphRef}
-            className="hidden xl:block relative rounded-xl bg-white/[0.02] border border-white/[0.05] overflow-hidden mb-4"
-            style={{ aspectRatio: "5 / 2" }}
-          >
-            <svg viewBox="0 0 1000 400" preserveAspectRatio="none" className="absolute inset-0 w-full h-full" style={{ pointerEvents: "none" }}>
-              <defs>
-                <linearGradient id="lineGradAB" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="rgba(245,158,11,0.4)" />
-                  <stop offset="100%" stopColor="rgba(139,92,246,0.4)" />
-                </linearGradient>
-                <linearGradient id="lineGradCD" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="rgba(236,72,153,0.35)" />
-                  <stop offset="100%" stopColor="rgba(168,85,247,0.35)" />
-                </linearGradient>
-                <linearGradient id="lineGradAC" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="rgba(245,158,11,0.35)" />
-                  <stop offset="100%" stopColor="rgba(236,72,153,0.35)" />
-                </linearGradient>
-                <linearGradient id="lineGradBD" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="rgba(139,92,246,0.35)" />
-                  <stop offset="100%" stopColor="rgba(168,85,247,0.35)" />
-                </linearGradient>
-                <linearGradient id="lineGradAD" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="rgba(245,158,11,0.25)" />
-                  <stop offset="100%" stopColor="rgba(168,85,247,0.25)" />
-                </linearGradient>
-                <filter id="lineGlow">
-                  <feGaussianBlur stdDeviation="2" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-                <filter id="particleGlow">
-                  <feGaussianBlur stdDeviation="1.5" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
-                </filter>
-              </defs>
-
-              {connections.map((c) => {
-                const isActive = activeConnections.has(`${c.from}->${c.to}`);
-                const isDiag = c.key === "ad";
-                return (
-                  <path
-                    key={c.key}
-                    d={SVG_PATHS[c.key]}
-                    fill="none"
-                    stroke={isActive ? `url(#${c.gradId})` : "rgba(255,255,255,0.04)"}
-                    strokeWidth={isActive ? (isDiag ? "1.5" : "2") : (isDiag ? "0.5" : "0.8")}
-                    strokeDasharray={isActive ? "none" : (isDiag ? "3 6" : "4 4")}
-                    opacity={isActive ? (isDiag ? "0.6" : "0.9") : (isDiag ? "0.2" : "0.3")}
-                    filter={isActive ? "url(#lineGlow)" : undefined}
-                    style={{ transition: "all 0.5s cubic-bezier(0.23,1,0.32,1)" }}
-                  />
-                );
-              })}
-
-              {/* Data flow particles */}
-              {phase === "running" &&
-                connections
-                  .filter((c) => activeConnections.has(`${c.from}->${c.to}`) && c.key !== "ad")
-                  .map((c) => {
-                    const colors: Record<string, string[]> = {
-                      ab: ["#c084fc", "#a855f7", "#ffffff"],
-                      ac: ["#f59e0b", "#ec4899"],
-                      bd: ["#a855f7", "#c084fc"],
-                      cd: ["#ec4899", "#a855f7"],
-                    };
-                    const radii = [4, 2.5, 2];
-                    const durs = ["2.2s", "2.8s", "3.2s"];
-                    const begins = ["0s", "0.8s", "1.6s"];
-                    return (colors[c.key] || []).map((col, i) => (
-                      <circle
-                        key={`${c.key}-p${i}`}
-                        r={String(radii[i] || 2.5)}
-                        fill={col}
-                        filter="url(#particleGlow)"
-                        opacity={i === 0 ? "0.9" : "0.6"}
-                      >
-                        <animateMotion dur={durs[i] || "2.8s"} repeatCount="indefinite" path={SVG_PATHS[c.key]} begin={begins[i] || "0s"} />
-                      </circle>
-                    ));
-                  })}
-
-              {phase === "running" && activeConnections.has("architect->supervisor") && (
-                <circle r="3" fill="#c084fc" filter="url(#particleGlow)" opacity="0.7">
-                  <animateMotion dur="2.8s" repeatCount="indefinite" path={SVG_PATHS.ad} begin="0.5s" />
-                </circle>
-              )}
-            </svg>
-
-            {/* Center hub */}
-            <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-              animate={phase === "running" ? { scale: [1, 1.2, 1], opacity: [0.04, 0.1, 0.04] } : {}}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/8" />
-            </motion.div>
-
-            {/* Hexagonal agent nodes */}
+          <div className="grid grid-cols-2 gap-2.5 mb-4 xl:hidden">
             {agents.map((agent, idx) => {
               const AgentIcon = agent.icon;
               const isRunning = agent.status === "running";
               const isCompleted = agent.status === "completed";
-
               return (
                 <motion.div
                   key={agent.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: isRunning ? 1.05 : 1 }}
-                  transition={{ duration: 0.5, delay: idx * 0.08, ease: [0.23, 1, 0.32, 1] }}
-                  className="absolute -translate-x-1/2 -translate-y-1/2"
-                  style={{ left: `${agent.position.x}%`, top: `${agent.position.y}%` }}
+                  initial={{ opacity: 0, scale: 0.92, y: 6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: idx * 0.05, ease: [0.23, 1, 0.32, 1] }}
+                  className={`agent-card-mobile ${isRunning ? "agent-card-running" : isCompleted ? "agent-card-done" : "agent-card-idle"}`}
+                  style={isRunning ? { animation: "card-breathe 3s ease-in-out infinite" } : undefined}
                 >
-                  <div className={`relative w-[110px] h-[126px] ${agent.glowClass} ${isRunning ? "agent-glow-pulse" : ""}`}>
-                    {/* Inner content */}
-                    <div
-                      className="absolute inset-[1px] flex flex-col items-center justify-center p-2.5 bg-[#0c0c16]/95 backdrop-blur-xl"
-                      style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}
-                    >
-                      <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${agent.gradient} flex items-center justify-center mb-1.5`}>
-                        <AgentIcon className="w-4 h-4 text-white" />
-                      </div>
-                      <h4 className="text-[10px] font-bold text-foreground text-center leading-tight">{agent.name}</h4>
-                      <p className="text-[8px] text-muted-foreground text-center leading-tight mt-0.5 line-clamp-1 max-w-[90px]">{agent.role}</p>
-                      <div className="flex items-center gap-1 mt-1.5">
-                        <div
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            isCompleted ? "bg-emerald-500" : isRunning ? "bg-primary" : agent.status === "error" ? "bg-pink-500" : "bg-white/20"
-                          }`}
-                          style={isRunning ? { animation: "agent-glow 1s ease-in-out infinite" } : {}}
-                        />
-                        <span className="text-[7px] text-muted-foreground capitalize">{agent.status}</span>
-                      </div>
+                  <div className="relative">
+                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${agent.gradient} flex items-center justify-center shrink-0 ${isRunning ? "agent-card-icon-pulse" : ""}`}>
+                      <AgentIcon className="w-4 h-4 text-white" />
+                    </div>
+                    {isRunning && (
+                      <div
+                        className="absolute rounded-full"
+                        style={{
+                          width: 3,
+                          height: 3,
+                          top: -1,
+                          right: -1,
+                          background: "hsl(var(--primary) / 0.8)",
+                          boxShadow: "0 0 4px hsl(var(--primary) / 0.6)",
+                          animation: "icon-orbit 2s linear infinite",
+                        }}
+                      />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-semibold text-foreground truncate">{agent.name}</p>
+                    <p className="text-[9px] text-muted-foreground/70 truncate">{agent.role}</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <div
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                          isCompleted ? "bg-emerald-500" : isRunning ? "bg-primary" : agent.status === "error" ? "bg-pink-500" : "bg-white/20"
+                        }`}
+                        style={isRunning ? { animation: "agent-glow 1s ease-in-out infinite" } : {}}
+                      />
+                      <p className="text-[9px] text-muted-foreground truncate capitalize">
+                        {isRunning ? agent.message : agent.status}
+                      </p>
                     </div>
                   </div>
                 </motion.div>
@@ -731,49 +595,447 @@ export function SwarmDashboard({ onComplete }: SwarmDashboardProps) {
             })}
           </div>
 
-          {/* ── Live Log Console ───────────────────────────────── */}
-          <div className="section-card">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-pink-500/60" />
-                <div className="w-2 h-2 rounded-full bg-amber-500/60" />
-                <div className="w-2 h-2 rounded-full bg-emerald-500/60" />
+          {/* ── Agent Network Grid (xl+) ───────────────────────── */}
+          <div
+            ref={swarmGraphRef}
+            className="hidden xl:block rounded-xl bg-white/[0.02] border border-white/[0.05] p-6 mb-4"
+          >
+            {/* 2×2 Grid with connecting SVG overlay */}
+            <div className="relative" style={{ maxWidth: "800px", width: "100%", margin: "0 auto" }}>
+              {/* SVG connection lines layer */}
+              <svg
+                viewBox="0 0 800 400"
+                preserveAspectRatio="none"
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                style={{ zIndex: 0 }}
+              >
+                <defs>
+                  {/* Gradient definitions for each connection */}
+                  <linearGradient id="lineGradAB" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(245,158,11,0.6)" />
+                    <stop offset="100%" stopColor="rgba(139,92,246,0.6)" />
+                  </linearGradient>
+                  <linearGradient id="lineGradCD" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="rgba(236,72,153,0.55)" />
+                    <stop offset="100%" stopColor="rgba(168,85,247,0.55)" />
+                  </linearGradient>
+                  <linearGradient id="lineGradAC" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="rgba(245,158,11,0.5)" />
+                    <stop offset="100%" stopColor="rgba(236,72,153,0.5)" />
+                  </linearGradient>
+                  <linearGradient id="lineGradBD" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stopColor="rgba(139,92,246,0.5)" />
+                    <stop offset="100%" stopColor="rgba(168,85,247,0.5)" />
+                  </linearGradient>
+                  <linearGradient id="lineGradAD" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="rgba(245,158,11,0.4)" />
+                    <stop offset="100%" stopColor="rgba(168,85,247,0.4)" />
+                  </linearGradient>
+
+                  {/* Glow filters */}
+                  <filter id="connGlow">
+                    <feGaussianBlur stdDeviation="3" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                  <filter id="particleGlow">
+                    <feGaussianBlur stdDeviation="2" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                  <filter id="softGlow">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+
+                  {/* Marching ants dash pattern */}
+                  <pattern id="marchPatternH" patternUnits="userSpaceOnUse" width="24" height="4">
+                    <line x1="0" y1="2" x2="16" y2="2" stroke="currentColor" strokeWidth="2" />
+                  </pattern>
+                  <pattern id="marchPatternV" patternUnits="userSpaceOnUse" width="4" height="24">
+                    <line x1="2" y1="0" x2="2" y2="16" stroke="currentColor" strokeWidth="2" />
+                  </pattern>
+                </defs>
+
+                {/* ── Curved connection paths ────────────────────── */}
+                {/* Top row: Architect → Coder (gentle S-curve) */}
+                <path
+                  d="M 200 140 C 350 110, 450 170, 600 140"
+                  fill="none"
+                  stroke={activeConnections.has("architect->coder") ? "url(#lineGradAB)" : "rgba(255,255,255,0.04)"}
+                  strokeWidth={activeConnections.has("architect->coder") ? "2.5" : "1"}
+                  strokeDasharray={activeConnections.has("architect->coder") ? "8 6" : "4 5"}
+                  strokeLinecap="round"
+                  filter={activeConnections.has("architect->coder") ? "url(#connGlow)" : undefined}
+                  className={activeConnections.has("architect->coder") ? "conn-line-active" : undefined}
+                  style={{ transition: "stroke 0.5s ease, stroke-width 0.5s ease" }}
+                />
+                {/* Bottom row: Debugger → Supervisor (gentle S-curve) */}
+                <path
+                  d="M 200 340 C 350 310, 450 370, 600 340"
+                  fill="none"
+                  stroke={activeConnections.has("debugger->supervisor") ? "url(#lineGradCD)" : "rgba(255,255,255,0.04)"}
+                  strokeWidth={activeConnections.has("debugger->supervisor") ? "2.5" : "1"}
+                  strokeDasharray={activeConnections.has("debugger->supervisor") ? "8 6" : "4 5"}
+                  strokeLinecap="round"
+                  filter={activeConnections.has("debugger->supervisor") ? "url(#connGlow)" : undefined}
+                  className={activeConnections.has("debugger->supervisor") ? "conn-line-active" : undefined}
+                  style={{ transition: "stroke 0.5s ease, stroke-width 0.5s ease" }}
+                />
+                {/* Left col: Architect → Debugger (gentle S-curve) */}
+                <path
+                  d="M 200 140 C 170 220, 230 260, 200 340"
+                  fill="none"
+                  stroke={activeConnections.has("architect->debugger") ? "url(#lineGradAC)" : "rgba(255,255,255,0.04)"}
+                  strokeWidth={activeConnections.has("architect->debugger") ? "2.5" : "1"}
+                  strokeDasharray={activeConnections.has("architect->debugger") ? "8 6" : "4 5"}
+                  strokeLinecap="round"
+                  filter={activeConnections.has("architect->debugger") ? "url(#connGlow)" : undefined}
+                  className={activeConnections.has("architect->debugger") ? "conn-line-active-v" : undefined}
+                  style={{ transition: "stroke 0.5s ease, stroke-width 0.5s ease" }}
+                />
+                {/* Right col: Coder → Supervisor (gentle S-curve) */}
+                <path
+                  d="M 600 140 C 630 220, 570 260, 600 340"
+                  fill="none"
+                  stroke={activeConnections.has("coder->supervisor") ? "url(#lineGradBD)" : "rgba(255,255,255,0.04)"}
+                  strokeWidth={activeConnections.has("coder->supervisor") ? "2.5" : "1"}
+                  strokeDasharray={activeConnections.has("coder->supervisor") ? "8 6" : "4 5"}
+                  strokeLinecap="round"
+                  filter={activeConnections.has("coder->supervisor") ? "url(#connGlow)" : undefined}
+                  className={activeConnections.has("coder->supervisor") ? "conn-line-active-v" : undefined}
+                  style={{ transition: "stroke 0.5s ease, stroke-width 0.5s ease" }}
+                />
+                {/* Diagonal: Architect → Supervisor (arc) */}
+                <path
+                  d="M 200 140 C 350 280, 500 320, 600 340"
+                  fill="none"
+                  stroke={activeConnections.has("architect->supervisor") ? "url(#lineGradAD)" : "rgba(255,255,255,0.025)"}
+                  strokeWidth={activeConnections.has("architect->supervisor") ? "2" : "0.8"}
+                  strokeDasharray={activeConnections.has("architect->supervisor") ? "6 8" : "3 7"}
+                  strokeLinecap="round"
+                  filter={activeConnections.has("architect->supervisor") ? "url(#connGlow)" : undefined}
+                  className={activeConnections.has("architect->supervisor") ? "conn-line-active-d" : undefined}
+                  style={{ transition: "stroke 0.5s ease, stroke-width 0.5s ease" }}
+                />
+
+                {/* ── Data flow particles on active connections ──── */}
+                {/* Top row particles */}
+                {phase === "running" && activeConnections.has("architect->coder") && (
+                  <>
+                    <circle r="5" fill="#c084fc" filter="url(#particleGlow)" opacity="0.95">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" path="M 200 140 C 350 110, 450 170, 600 140" />
+                    </circle>
+                    <circle r="3" fill="#a855f7" filter="url(#particleGlow)" opacity="0.7">
+                      <animateMotion dur="2.2s" repeatCount="indefinite" path="M 200 140 C 350 110, 450 170, 600 140" begin="0.6s" />
+                    </circle>
+                    <circle r="2" fill="#ffffff" filter="url(#particleGlow)" opacity="0.5">
+                      <animateMotion dur="2.6s" repeatCount="indefinite" path="M 200 140 C 350 110, 450 170, 600 140" begin="1.2s" />
+                    </circle>
+                  </>
+                )}
+                {/* Bottom row particles */}
+                {phase === "running" && activeConnections.has("debugger->supervisor") && (
+                  <>
+                    <circle r="5" fill="#ec4899" filter="url(#particleGlow)" opacity="0.95">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" path="M 200 340 C 350 310, 450 370, 600 340" />
+                    </circle>
+                    <circle r="3" fill="#a855f7" filter="url(#particleGlow)" opacity="0.7">
+                      <animateMotion dur="2.2s" repeatCount="indefinite" path="M 200 340 C 350 310, 450 370, 600 340" begin="0.6s" />
+                    </circle>
+                    <circle r="2" fill="#ffffff" filter="url(#particleGlow)" opacity="0.5">
+                      <animateMotion dur="2.6s" repeatCount="indefinite" path="M 200 340 C 350 310, 450 370, 600 340" begin="1.2s" />
+                    </circle>
+                  </>
+                )}
+                {/* Left col particles */}
+                {phase === "running" && activeConnections.has("architect->debugger") && (
+                  <>
+                    <circle r="5" fill="#f59e0b" filter="url(#particleGlow)" opacity="0.95">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" path="M 200 140 C 170 220, 230 260, 200 340" />
+                    </circle>
+                    <circle r="3" fill="#ec4899" filter="url(#particleGlow)" opacity="0.7">
+                      <animateMotion dur="2.2s" repeatCount="indefinite" path="M 200 140 C 170 220, 230 260, 200 340" begin="0.6s" />
+                    </circle>
+                    <circle r="2" fill="#ffffff" filter="url(#particleGlow)" opacity="0.5">
+                      <animateMotion dur="2.6s" repeatCount="indefinite" path="M 200 140 C 170 220, 230 260, 200 340" begin="1.2s" />
+                    </circle>
+                  </>
+                )}
+                {/* Right col particles */}
+                {phase === "running" && activeConnections.has("coder->supervisor") && (
+                  <>
+                    <circle r="5" fill="#a855f7" filter="url(#particleGlow)" opacity="0.95">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" path="M 600 140 C 630 220, 570 260, 600 340" />
+                    </circle>
+                    <circle r="3" fill="#c084fc" filter="url(#particleGlow)" opacity="0.7">
+                      <animateMotion dur="2.2s" repeatCount="indefinite" path="M 600 140 C 630 220, 570 260, 600 340" begin="0.6s" />
+                    </circle>
+                    <circle r="2" fill="#ffffff" filter="url(#particleGlow)" opacity="0.5">
+                      <animateMotion dur="2.6s" repeatCount="indefinite" path="M 600 140 C 630 220, 570 260, 600 340" begin="1.2s" />
+                    </circle>
+                  </>
+                )}
+                {/* Diagonal particles */}
+                {phase === "running" && activeConnections.has("architect->supervisor") && (
+                  <>
+                    <circle r="4" fill="#c084fc" filter="url(#particleGlow)" opacity="0.85">
+                      <animateMotion dur="2.8s" repeatCount="indefinite" path="M 200 140 C 350 280, 500 320, 600 340" />
+                    </circle>
+                    <circle r="2.5" fill="#f59e0b" filter="url(#particleGlow)" opacity="0.6">
+                      <animateMotion dur="3.2s" repeatCount="indefinite" path="M 200 140 C 350 280, 500 320, 600 340" begin="0.8s" />
+                    </circle>
+                  </>
+                )}
+
+                {/* ── Connection activation bursts ──────────────── */}
+                {phase === "running" && activeConnection && (
+                  <circle
+                    cx={activeConnection === "architect->coder" ? 400
+                      : activeConnection === "debugger->supervisor" ? 400
+                      : activeConnection === "architect->debugger" ? 200
+                      : activeConnection === "coder->supervisor" ? 600
+                      : 400}
+                    cy={activeConnection === "architect->coder" ? 140
+                      : activeConnection === "debugger->supervisor" ? 340
+                      : activeConnection === "architect->debugger" ? 240
+                      : activeConnection === "coder->supervisor" ? 240
+                      : 240}
+                    fill="none"
+                    stroke="hsl(var(--primary) / 0.6)"
+                    strokeWidth="2"
+                    r="4"
+                    opacity="0.8"
+                  >
+                    <animate attributeName="r" from="4" to="35" dur="0.8s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" from="0.8" to="0" dur="0.8s" repeatCount="indefinite" />
+                  </circle>
+                )}
+              </svg>
+
+              {/* ── Center hub with rotating rings ──────────────── */}
+              <div
+                className="absolute top-1/2 left-1/2 pointer-events-none"
+                style={{ zIndex: 1, width: 80, height: 80, marginLeft: -40, marginTop: -40 }}
+              >
+                {/* Outer rotating ring */}
+                <div
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    border: "1px dashed hsl(var(--primary) / 0.15)",
+                    animation: phase === "running" ? "hub-ring-outer 12s linear infinite" : "none",
+                  }}
+                />
+                {/* Inner counter-rotating ring */}
+                <div
+                  className="absolute rounded-full"
+                  style={{
+                    inset: 12,
+                    border: "1px dashed hsl(var(--secondary) / 0.1)",
+                    animation: phase === "running" ? "hub-ring-inner 8s linear infinite" : "none",
+                  }}
+                />
+                {/* Pulsing core */}
+                <div
+                  className="absolute rounded-full"
+                  style={{
+                    inset: 24,
+                    background: "radial-gradient(circle, hsl(var(--primary) / 0.08) 0%, transparent 70%)",
+                    animation: phase === "running" ? "hub-pulse 3s ease-in-out infinite" : "none",
+                  }}
+                />
+                {/* Orbiting dot */}
+                {phase === "running" && (
+                  <div
+                    className="absolute"
+                    style={{
+                      width: 6,
+                      height: 6,
+                      top: "50%",
+                      left: "50%",
+                      marginTop: -3,
+                      marginLeft: -3,
+                      borderRadius: "50%",
+                      background: "hsl(var(--primary) / 0.7)",
+                      boxShadow: "0 0 8px hsl(var(--primary) / 0.5)",
+                      animation: "icon-orbit 4s linear infinite",
+                    }}
+                  />
+                )}
               </div>
-              <span className="text-[11px] font-medium text-muted-foreground ml-1">agent-console</span>
-              {phase === "running" && (
-                <div className="flex items-center gap-1 ml-auto">
-                  <Timer className="w-3 h-3 text-primary" />
-                  <span className="text-[10px] text-primary">Live</span>
-                </div>
-              )}
-              {phase === "complete" && (
-                <div className="flex items-center gap-1 ml-auto">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                  <span className="text-[10px] text-emerald-500">Complete</span>
-                </div>
-              )}
+
+              {/* ── 2×2 Agent Card Grid ────────────────────────── */}
+              <div
+                className="grid grid-cols-2 gap-8 xl:gap-6 relative"
+                style={{ gridTemplateRows: "minmax(180px, auto) minmax(180px, auto)", zIndex: 2 }}
+              >
+                {agents.map((agent, idx) => {
+                  const AgentIcon = agent.icon;
+                  const isRunning = agent.status === "running";
+                  const isCompleted = agent.status === "completed";
+
+                  return (
+                    <motion.div
+                      key={agent.id}
+                      initial={{ opacity: 0, scale: 0.88, y: 12 }}
+                      animate={{
+                        opacity: 1,
+                        scale: isRunning ? 1.02 : 1,
+                        y: 0,
+                      }}
+                      transition={{
+                        duration: 0.5,
+                        delay: idx * 0.08,
+                        ease: [0.23, 1, 0.32, 1],
+                        scale: isRunning ? { duration: 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" } : { duration: 0.5 },
+                      }}
+                      className={`col-item-${idx}`}
+                    >
+                      <div
+                        className={`agent-card ${isRunning ? "agent-card-running" : isCompleted ? "agent-card-done" : "agent-card-idle"}`}
+                        style={isRunning ? { animation: "card-breathe 3s ease-in-out infinite" } : undefined}
+                      >
+                        {/* Icon with orbit ring */}
+                        <div className="relative">
+                          <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${agent.gradient} flex items-center justify-center ${agent.glowClass} ${isRunning ? "agent-card-icon-pulse" : ""}`}>
+                            <AgentIcon className="w-5 h-5 text-white" />
+                          </div>
+                          {/* Orbiting particle around icon when running */}
+                          {isRunning && (
+                            <>
+                              <div
+                                className="absolute rounded-full"
+                                style={{
+                                  width: 4,
+                                  height: 4,
+                                  top: "50%",
+                                  left: "50%",
+                                  marginTop: -2,
+                                  marginLeft: -2,
+                                  background: "hsl(var(--primary) / 0.8)",
+                                  boxShadow: "0 0 6px hsl(var(--primary) / 0.6)",
+                                  animation: "icon-orbit 2.5s linear infinite",
+                                }}
+                              />
+                              <div
+                                className="absolute rounded-full"
+                                style={{
+                                  width: 3,
+                                  height: 3,
+                                  top: "50%",
+                                  left: "50%",
+                                  marginTop: -1.5,
+                                  marginLeft: -1.5,
+                                  background: "hsl(var(--secondary) / 0.6)",
+                                  boxShadow: "0 0 4px hsl(var(--secondary) / 0.4)",
+                                  animation: "icon-orbit-rev 3.2s linear infinite",
+                                }}
+                              />
+                            </>
+                          )}
+                        </div>
+                        {/* Name + Role */}
+                        <div className="text-center mt-3">
+                          <h4 className="text-xs font-bold text-foreground tracking-tight">{agent.name}</h4>
+                          <p className="text-[10px] text-muted-foreground/70 mt-0.5">{agent.role}</p>
+                        </div>
+                        {/* Status */}
+                        <div className={`flex items-center justify-center gap-1.5 mt-3 px-3 py-1.5 rounded-full ${
+                          isCompleted
+                            ? "bg-emerald-500/10 border border-emerald-500/15"
+                            : isRunning
+                            ? "bg-primary/10 border border-primary/15"
+                            : "bg-white/[0.03] border border-white/[0.06]"
+                        }`}>
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              isCompleted ? "bg-emerald-500" : isRunning ? "bg-primary" : agent.status === "error" ? "bg-pink-500" : "bg-white/20"
+                            }`}
+                            style={isRunning ? { animation: "agent-glow 1s ease-in-out infinite" } : {}}
+                          />
+                          <span className={`text-[10px] font-medium capitalize ${
+                            isCompleted ? "text-emerald-400/90" : isRunning ? "text-primary" : "text-muted-foreground/70"
+                          }`}>
+                            {isRunning ? agent.message : agent.status}
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
             </div>
+          </div>
+
+          {/* ── Live Log Console ───────────────────────────────── */}
+          <div className="agent-console">
+            {/* Console header bar */}
+            <div className="agent-console-header">
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-pink-500/70" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500/70" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/70" />
+                </div>
+                <span className="text-[11px] font-semibold text-muted-foreground/80 ml-1 tracking-wide">agent-console</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {phase === "running" && (
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/15">
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    <span className="text-[10px] font-medium text-primary">Live</span>
+                  </div>
+                )}
+                {phase === "complete" && (
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/15">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    <span className="text-[10px] font-medium text-emerald-400">Complete</span>
+                  </div>
+                )}
+                {phase === "config" && (
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/[0.03] border border-white/[0.06]">
+                    <div className="w-1.5 h-1.5 rounded-full bg-white/20" />
+                    <span className="text-[10px] font-medium text-muted-foreground/50">Standby</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            {/* Console body */}
             <div
               ref={logContainerRef}
-              className="bg-black/30 rounded-xl p-3 max-h-40 overflow-y-auto font-mono text-[11px] space-y-1 border border-white/[0.04]"
+              className="agent-console-body"
             >
               {logs.length === 0 && phase === "running" && (
-                <p className="text-primary animate-pulse">Initializing swarm agents...</p>
+                <p className="text-primary/80 animate-pulse flex items-center gap-2">
+                  <ChevronRight className="w-3 h-3" />
+                  Initializing swarm agents...
+                </p>
               )}
               {logs.length === 0 && phase === "config" && (
-                <p className="text-muted-foreground/40">Waiting for activation...</p>
+                <p className="text-muted-foreground/30 flex items-center gap-2">
+                  <ChevronRight className="w-3 h-3" />
+                  Waiting for activation...
+                </p>
               )}
               {phase === "complete" && (
-                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-emerald-400/70">
-                  Swarm operation completed
+                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-emerald-400/70 flex items-center gap-2">
+                  <CheckCircle2 className="w-3 h-3" />
+                  Swarm operation completed successfully
                 </motion.p>
               )}
               <AnimatePresence>
                 {logs.map((log, i) => {
                   const statusColor = log.status === "completed"
-                    ? "text-emerald-400/70"
+                    ? "text-emerald-400/80"
                     : log.status === "running"
-                    ? "text-primary/80"
+                    ? "text-primary/90"
                     : "text-muted-foreground/60";
                   return (
                     <motion.div
@@ -781,10 +1043,10 @@ export function SwarmDashboard({ onComplete }: SwarmDashboardProps) {
                       initial={{ opacity: 0, x: -6 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.15 }}
-                      className={`flex items-start gap-1.5 ${statusColor}`}
+                      className={`flex items-start gap-2 ${statusColor}`}
                     >
-                      <ChevronRight className="w-3 h-3 mt-0.5 shrink-0" />
-                      <span className="text-muted-foreground/50 shrink-0">[{log.agent}]</span>
+                      <ChevronRight className="w-3 h-3 mt-0.5 shrink-0 opacity-50" />
+                      <span className="text-muted-foreground/40 shrink-0 font-semibold">[{log.agent}]</span>
                       <span>{log.message}</span>
                     </motion.div>
                   );
