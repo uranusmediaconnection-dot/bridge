@@ -21,6 +21,13 @@ ENV/
 # Environment
 .env
 .env.local
+.env.*
+
+# Database
+database.db
+
+# Build artifacts
+tsconfig.tsbuildinfo
 
 # Output
 output/
@@ -38,21 +45,16 @@ out/
 # Design-sync
 .ds-sync/
 ds-bundle/
+.design-sync/
 
 # Claude internal files
-.claude/**/*.lock
-.claude/mind.mv2
+.claude/
 
 # Playwright test artifacts
 .playwright-mcp/
 
 # Blackbox skills
 .blackbox/
-
-# Claude worktrees (embedded git repos)
-.claude/worktrees/
-.claude/mind.mv2
-.claude/mind.mv2.lock
 
 # Generated AI images
 Gemini_Generated_Image_*.jpg

@@ -312,8 +312,85 @@
 
 /* ─── Animations ────────────────────────────────────────────── */
 @keyframes agent-glow {
-  0%, 100% { filter: brightness(1); }
-  50% { filter: brightness(1.2); }
+  0%, 100% { filter: brightness(1); box-shadow: 0 0 15px hsl(var(--primary) / 0.1); }
+  50% { filter: brightness(1.3); box-shadow: 0 0 30px hsl(var(--primary) / 0.25); }
+}
+
+/* ─── Connection marching ants ───────────────────────────────── */
+@keyframes conn-march-right {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -24; }
+}
+@keyframes conn-march-down {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -24; }
+}
+@keyframes conn-march-diag {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -32; }
+}
+
+.conn-line-active {
+  animation: conn-march-right 0.8s linear infinite;
+}
+.conn-line-active-v {
+  animation: conn-march-down 0.8s linear infinite;
+}
+.conn-line-active-d {
+  animation: conn-march-diag 1s linear infinite;
+}
+
+/* ─── Center hub rings + pulse ───────────────────────────────── */
+@keyframes hub-ring-outer {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+@keyframes hub-ring-inner {
+  0% { transform: translate(-50%, -50%) rotate(0deg); }
+  100% { transform: translate(-50%, -50%) rotate(-360deg); }
+}
+@keyframes hub-pulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.06; }
+  50% { transform: translate(-50%, -50%) scale(1.4); opacity: 0.12; }
+}
+@keyframes hub-breathe {
+  0%, 100% { box-shadow: 0 0 20px hsl(var(--primary) / 0.05), inset 0 0 15px hsl(var(--primary) / 0.02); }
+  50% { box-shadow: 0 0 40px hsl(var(--primary) / 0.12), inset 0 0 25px hsl(var(--primary) / 0.05); }
+}
+
+/* ─── Agent card breathing when running ──────────────────────── */
+@keyframes card-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+@keyframes icon-orbit {
+  0% { transform: rotate(0deg) translateX(20px) rotate(0deg); opacity: 0; }
+  20% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { transform: rotate(360deg) translateX(20px) rotate(-360deg); opacity: 0; }
+}
+@keyframes icon-orbit-rev {
+  0% { transform: rotate(0deg) translateX(16px) rotate(0deg); opacity: 0; }
+  20% { opacity: 0.4; }
+  80% { opacity: 0.4; }
+  100% { transform: rotate(-360deg) translateX(16px) rotate(360deg); opacity: 0; }
+}
+
+/* ─── Connection activation burst ────────────────────────────── */
+@keyframes conn-burst {
+  0% { r: 2; opacity: 1; }
+  100% { r: 30; opacity: 0; }
+}
+@keyframes conn-ripple {
+  0% { stroke-width: 4; opacity: 0.8; }
+  100% { stroke-width: 1; opacity: 0.3; }
+}
+
+/* ─── Completed flash ────────────────────────────────────────── */
+@keyframes completed-flash {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 30px 8px rgba(16, 185, 129, 0.15); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
 }
 
 @keyframes data-flow-arrow {
@@ -405,6 +482,110 @@
 
 .agent-glow-pulse {
   animation: agent-glow 2s ease-in-out infinite;
+}
+
+/* ─── Agent Network Cards ────────────────────────────────────── */
+.agent-card {
+  @apply relative flex flex-col items-center justify-center rounded-2xl border p-5;
+  background: hsl(var(--card) / 0.6);
+  border-color: hsl(var(--border));
+  transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+  min-height: 180px;
+}
+.agent-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--metal-shine);
+  pointer-events: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .agent-card:hover {
+    border-color: hsl(var(--primary) / 0.2);
+    background: hsl(var(--card) / 0.8);
+    transform: translateY(-2px);
+  }
+}
+
+.agent-card-running {
+  border-color: hsl(var(--primary) / 0.25);
+  background: hsl(var(--primary) / 0.04);
+  box-shadow: 0 0 30px hsl(var(--primary) / 0.06), inset 0 0 20px hsl(var(--primary) / 0.02);
+}
+.agent-card-running::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid hsl(var(--primary) / 0.15);
+  pointer-events: none;
+  animation: agent-glow 2s ease-in-out infinite;
+}
+
+.agent-card-done {
+  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.03);
+}
+
+.agent-card-idle {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.agent-card-icon-pulse {
+  animation: agent-glow 2s ease-in-out infinite;
+}
+
+/* Mobile agent cards */
+.agent-card-mobile {
+  @apply relative flex items-center gap-2.5 p-3 rounded-xl border;
+  background: hsl(var(--card) / 0.5);
+  border-color: hsl(var(--border));
+  transition: all 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.agent-card-mobile.agent-card-running {
+  border-color: hsl(var(--primary) / 0.25);
+  background: hsl(var(--primary) / 0.04);
+  box-shadow: 0 0 20px hsl(var(--primary) / 0.05);
+}
+.agent-card-mobile.agent-card-done {
+  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.03);
+}
+.agent-card-mobile.agent-card-idle {
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Agent Console ─────────────────────────────────────────── */
+.agent-console {
+  @apply relative rounded-2xl border overflow-hidden;
+  background: hsl(var(--card) / 0.4);
+  border-color: hsl(var(--border));
+}
+.agent-console::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--metal-shine);
+  pointer-events: none;
+  z-index: 0;
+}
+.agent-console-header,
+.agent-console-body {
+  position: relative;
+  z-index: 1;
+}
+
+.agent-console-header {
+  @apply flex items-center justify-between px-4 py-2.5 border-b;
+  border-color: hsl(var(--border));
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.agent-console-body {
+  @apply p-4 max-h-44 overflow-y-auto font-mono text-[11px] space-y-1.5;
+  background: rgba(0, 0, 0, 0.25);
 }
 
 /* ─── Skeleton ───────────────────────────────────────────────── */

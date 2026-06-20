@@ -17,13 +17,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.scrapers.requests_scraper import RequestsScraper
 from backend.scrapers.beautifulsoup_scraper import BeautifulSoupScraper
 from backend.scrapers.selenium_scraper import SeleniumScraper
+from backend.scrapers.stealth_scraper import StealthScraper
 from backend.search.search_engines import SearchService
 from backend.proxy.proxy_router import proxy_router, ProxyConfig as BackendProxyConfig, ProxyType
+from backend.proxy.free_proxies import proxy_pool
 
 app = FastAPI(
     title="Web Scraper API",
-    description="Comprehensive web scraping API with multiple scraper backends",
-    version="1.0.0",
+    description="Comprehensive web scraping API with stealth scraping, email/phone validation, and lead enrichment",
+    version="2.0.0",
 )
 
 # CORS middleware
@@ -36,10 +38,13 @@ app.add_middleware(
 )
 
 
-# Request/Response models
+# ============================================================
+# Request/Response Models
+# ============================================================
+
 class ScrapeRequest(BaseModel):
     url: str = Field(..., description="URL to scrape")
-    scraper: str = Field(default="requests", description="Scraper type: requests, beautifulsoup, selenium")
+    scraper: str = Field(default="stealth", description="Scraper type: stealth, requests, beautifulsoup, selenium")
     timeout: int = Field(default=30, description="Request timeout in seconds")
 
 
@@ -74,22 +79,68 @@ class SwarmResponse(BaseModel):
     error: Optional[str] = None
 
 
+# --- NEW: Validation & Enrichment Models ---
+
+class EmailValidationRequest(BaseModel):
+    emails: List[str] = Field(..., description="List of email addresses to validate")
+    do_smtp: bool = Field(default=False, description="Perform SMTP verification (slower)")
+
+
+class PhoneValidationRequest(BaseModel):
+    numbers: List[str] = Field(..., description="List of phone numbers to validate")
+    region: str = Field(default="US", description="Default region code (ISO)")
+
+
+class DomainEnrichmentRequest(BaseModel):
+    domain: str = Field(..., description="Domain to enrich (e.g. example.com)")
+
+
+class BatchEnrichmentRequest(BaseModel):
+    domains: List[str] = Field(..., description="List of domains to enrich")
+
+
+class EmailDiscoveryRequest(BaseModel):
+    domain: str = Field(..., description="Target domain")
+    known_names: Optional[List[Dict[str, str]]] = Field(
+        default=None,
+        description="Optional list of {first, last} names for pattern generation"
+    )
+
+
+class ProxyRefreshRequest(BaseModel):
+    pass
+
+
+# ============================================================
 # Initialize scrapers
+# ============================================================
+
 requests_scraper = RequestsScraper()
 beautifulsoup_scraper = BeautifulSoupScraper()
 selenium_scraper = SeleniumScraper()
+stealth_scraper = StealthScraper()
 search_service = SearchService()
 
+
+# ============================================================
+# Original Endpoints (enhanced)
+# ============================================================
 
 @app.get("/")
 async def root():
     """API root."""
     return {
         "name": "Web Scraper API",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "endpoints": [
             "/scrape",
             "/search",
+            "/validate/email",
+            "/validate/phone",
+            "/enrich/domain",
+            "/enrich/batch",
+            "/discovery/emails",
+            "/proxies/stats",
             "/health",
         ],
     }
@@ -98,14 +149,16 @@ async def root():
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy"}
+    return {"status": "healthy", "version": "2.0.0"}
 
 
 @app.post("/scrape", response_model=ScrapeResponse)
 async def scrape(request: ScrapeRequest):
-    """Scrape a URL using specified scraper."""
+    """Scrape a URL using specified scraper. 'stealth' uses TLS fingerprint impersonation."""
     try:
-        if request.scraper == "requests":
+        if request.scraper == "stealth":
+            result = stealth_scraper.scrape(request.url)
+        elif request.scraper == "requests":
             result = requests_scraper.scrape(request.url)
         elif request.scraper == "beautifulsoup":
             result = beautifulsoup_scraper.scrape(request.url)
@@ -120,12 +173,9 @@ async def scrape(request: ScrapeRequest):
         return ScrapeResponse(success=True, data=result.to_dict())
 
     except HTTPException:
-        # Preserve HTTP status codes (e.g., 400 for unknown scraper)
         raise
     except Exception as e:
         return ScrapeResponse(success=False, error=str(e))
-
-
 
 
 @app.post("/search", response_model=SearchResponse)
@@ -157,22 +207,17 @@ async def search_all(query: str, num_results: int = 10):
 @app.post("/swarm", response_model=SwarmResponse)
 async def swarm_scrape(request: SwarmRequest):
     """Simulate Swarm Intelligence scraping workflow."""
-    # In a real app, this would trigger actual AI agents.
-    # For now, we simulate the workflow steps.
-    
     logs = [
         {"agent": "Architect", "status": "completed", "message": "DOM mapping complete", "icon": "Blueprint"},
         {"agent": "Coder", "status": "completed", "message": "Script generated (JavaScript)", "icon": "Code2"},
         {"agent": "Debugger", "status": "completed", "message": "Tests passed (0 errors, 1 retry)", "icon": "ShieldCheck"},
         {"agent": "Supervisor", "status": "completed", "message": f"Consolidation complete. Found {request.amount} records.", "icon": "UserCheck"},
     ]
-    
-    # Simulate processing time with non-blocking sleep
+
     await asyncio.sleep(1.5)
-    
-    # Generate mock results based on request
+
     results = []
-    for i in range(min(request.amount, 5)): # Return max 5 for preview
+    for i in range(min(request.amount, 5)):
         results.append({
             "company": f"{request.industry} Corp {i+1}",
             "location": request.location,
@@ -184,7 +229,98 @@ async def swarm_scrape(request: SwarmRequest):
     return SwarmResponse(success=True, logs=logs, results=results)
 
 
+# ============================================================
+# NEW: Email Validation Endpoints
+# ============================================================
 
+@app.post("/validate/email")
+async def validate_emails(request: EmailValidationRequest):
+    """Validate email addresses with 3-layer verification:
+    Layer 1: Format + disposable check
+    Layer 2: DNS MX record verification
+    Layer 3: SMTP mailbox verification (optional)
+    """
+    from backend.validation.email_validator import EmailValidator
+
+    validator = EmailValidator(do_smtp=request.do_smtp)
+    results = validator.validate_batch(request.emails)
+
+    valid_count = sum(1 for r in results if r["valid"])
+    return {
+        "success": True,
+        "total": len(results),
+        "valid_count": valid_count,
+        "invalid_count": len(results) - valid_count,
+        "results": results,
+    }
+
+
+@app.post("/validate/phone")
+async def validate_phones(request: PhoneValidationRequest):
+    """Validate phone numbers using Google's libphonenumber.
+    Returns format, carrier, line type, timezone, and geolocation.
+    """
+    from backend.validation.phone_validator import PhoneNumberValidator
+
+    validator = PhoneNumberValidator(default_region=request.region)
+    results = validator.validate_batch(request.numbers, region=request.region)
+
+    valid_count = sum(1 for r in results if r["valid"])
+    return {
+        "success": True,
+        "total": len(results),
+        "valid_count": valid_count,
+        "invalid_count": len(results) - valid_count,
+        "results": results,
+    }
+
+
+# ============================================================
+# NEW: Lead Enrichment Endpoints
+# ============================================================
+
+@app.post("/enrich/domain")
+async def enrich_domain(request: DomainEnrichmentRequest):
+    """Enrich a lead from a domain.
+    Discovers: emails, phones, social profiles, tech stack, company info.
+    """
+    from backend.enrichment.lead_enricher import LeadEnricher
+
+    enricher = LeadEnricher()
+    result = enricher.enrich_domain(request.domain)
+    return {"success": True, "result": result}
+
+
+@app.post("/enrich/batch")
+async def enrich_batch(request: BatchEnrichmentRequest):
+    """Batch enrich multiple domains."""
+    from backend.enrichment.lead_enricher import LeadEnricher
+
+    enricher = LeadEnricher()
+    results = enricher.enrich_batch(request.domains)
+    return {
+        "success": True,
+        "total": len(results),
+        "results": results,
+    }
+
+
+@app.post("/discovery/emails")
+async def discover_emails(request: EmailDiscoveryRequest):
+    """Discover emails for a domain using web scraping + pattern generation."""
+    from backend.enrichment.email_finder import EmailDiscoveryService
+
+    service = EmailDiscoveryService()
+    result = service.discover(
+        domain=request.domain,
+        known_names=request.known_names,
+    )
+    return {"success": True, "result": result}
+
+
+# ============================================================
+# Proxy Endpoints
+# ============================================================
 
 class ProxySettings(BaseModel):
     """Proxy configuration from frontend."""
@@ -210,7 +346,6 @@ async def get_proxy_stats():
 @app.post("/proxy/config")
 async def update_proxy_config(config: ProxySettings):
     """Update proxy routing configuration."""
-    # In production, persist this config
     return {"success": True, "message": "Proxy configuration updated"}
 
 
@@ -235,6 +370,31 @@ async def test_proxy(request: ProxyTestRequest):
     except Exception as e:
         return {"success": False, "latency": 0, "error": str(e)}
 
+
+@app.post("/proxies/refresh")
+async def refresh_proxies():
+    """Refresh free proxy pool from web sources."""
+    new_count = proxy_pool.refresh_from_web()
+    return {
+        "success": True,
+        "new_proxies": new_count,
+        "total_proxies": len(proxy_pool.proxies),
+        "stats": proxy_pool.stats,
+    }
+
+
+@app.get("/proxies/stats")
+async def get_free_proxy_stats():
+    """Get free proxy pool statistics."""
+    return {
+        "success": True,
+        "stats": proxy_pool.stats,
+    }
+
+
+# ============================================================
+# Providers
+# ============================================================
 
 @app.get("/providers")
 async def list_providers():
@@ -273,6 +433,7 @@ async def list_providers():
         },
     ]
     return {"success": True, "providers": providers}
+
 
 if __name__ == "__main__":
     uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=True)
