@@ -7,8 +7,9 @@ COPY frontend/ .
 RUN mkdir -p /app/frontend/public
 RUN npm run build
 
-# Stage 2: Python backend
+# Stage 2: Python backend + Node.js runtime for Next.js
 FROM python:3.11-slim AS backend
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs npm && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
