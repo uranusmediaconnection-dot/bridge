@@ -96,3 +96,12 @@ $null
 Copy-Item/
 -Force/
 -Recurse/
+# Database (local SQLite)
+database.db
+*.db
+
+# Docs / screenshots (binaries — excluded for HF compatibility)
+docs/assets/
+docs/screenshots/
+frontend/public/images/
+frontend/public/octopus-logo.png

@@ -5,6 +5,7 @@ import os
 import time
 import random
 import asyncio
+from datetime import datetime, timezone
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -227,6 +228,21 @@ async def swarm_scrape(request: SwarmRequest):
             "url": f"https://example.com/{i+1}"
         })
 
+    # Persist to Supabase if available
+    from backend.database import supabase_available
+    if supabase_available():
+        try:
+            from backend.database import operations as db_ops
+            db_ops.save_swarm_session(
+                industry=request.industry,
+                location=request.location,
+                amount=request.amount,
+                logs=logs,
+                results=results,
+            )
+        except Exception:
+            pass  # non-critical — don't break the response
+
     return SwarmResponse(success=True, logs=logs, results=results)
 
 
@@ -434,6 +450,97 @@ async def list_providers():
         },
     ]
     return {"success": True, "providers": providers}
+
+
+# ============================================================
+# Supabase initialisation (startup hook)
+# ============================================================
+
+@app.on_event("startup")
+async def startup():
+    """Initialise Supabase client on application start."""
+    from backend.database.supabase_client import init_supabase
+    init_supabase()
+    # Log the database status without importing operations yet
+    from backend.database import supabase_available
+    if supabase_available():
+        print("[startup] Supabase connected")
+    else:
+        print("[startup] Supabase not configured — running without DB persistence")
+
+
+# ============================================================
+# Database-backed endpoints
+# ============================================================
+
+@app.get("/api/stats")
+async def get_stats():
+    """Return aggregate statistics from the database."""
+    from backend.database import supabase_available
+    if not supabase_available():
+        return {"success": True, "note": "Database not configured", "jobs_total": 0, "swarms_total": 0}
+    from backend.database import operations as db
+    try:
+        jobs = db.get_scrape_history(limit=100)
+        swarms = db.get_swarm_history(limit=100)
+        return {
+            "success": True,
+            "jobs_total": len(jobs),
+            "swarms_total": len(swarms),
+        }
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+
+
+@app.get("/api/jobs")
+async def get_jobs(limit: int = 20):
+    """Return recent scrape jobs."""
+    from backend.database import supabase_available
+    if not supabase_available():
+        return {"success": True, "jobs": [], "note": "Database not configured"}
+    from backend.database import operations as db
+    try:
+        jobs = db.get_scrape_history(limit=limit)
+        return {"success": True, "jobs": jobs}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+
+
+@app.get("/api/swarms")
+async def get_swarms(limit: int = 10):
+    """Return recent swarm sessions."""
+    from backend.database import supabase_available
+    if not supabase_available():
+        return {"success": True, "swarms": [], "note": "Database not configured"}
+    from backend.database import operations as db
+    try:
+        swarms = db.get_swarm_history(limit=limit)
+        return {"success": True, "swarms": swarms}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+
+
+# ============================================================
+# Updated /health endpoint with DB status
+# ============================================================
+
+@app.get("/health", include_in_schema=False)
+async def health_check_extended():
+    """Health check — includes database connectivity."""
+    from backend.database.supabase_client import supabase_available
+    db_status = "connected" if supabase_available() else "not_configured"
+    if supabase_available():
+        try:
+            from backend.database import operations as db_ops
+            db_ops.get_scrape_history(limit=1)
+            db_status = "connected"
+        except Exception:
+            db_status = "error"
+    return {
+        "status": "healthy",
+        "version": "2.0.0",
+        "database": db_status,
+    }
 
 
 # Include routers
