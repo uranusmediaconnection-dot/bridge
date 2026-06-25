@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -32,36 +34,36 @@
   font-display: swap;
 }
 
-/* ─── Cyber-Metal Dark Theme (default) ─────────────────────────── */
+/* ─── Anthropic Brand Dark Theme (default) ──────────────────── */
 :root {
-  --background: 0 0% 5%;               /* Near-black metal base */
-  --foreground: 195 15% 88%;           /* Cool silver-white text */
-  --card: 0 0% 8%;                     /* Dark carbon fiber */
-  --card-foreground: 195 15% 88%;
-  --popover: 0 0% 8%;
-  --popover-foreground: 195 15% 88%;
-  --primary: 175 70% 50%;              /* Cyber-teal accent */
+  --background: 60 4% 8%;               /* Anthropic #141413 near-black */
+  --foreground: 50 20% 92%;             /* Warm off-white text */
+  --card: 60 5% 12%;                    /* Slightly lighter card */
+  --card-foreground: 50 20% 92%;
+  --popover: 60 5% 12%;
+  --popover-foreground: 50 20% 92%;
+  --primary: 210 45% 61%;               /* Anthropic blue #6a9bcc */
   --primary-foreground: 0 0% 100%;
-  --secondary: 265 60% 55%;            /* Electric purple */
+  --secondary: 15 65% 60%;              /* Anthropic orange #d97757 */
   --secondary-foreground: 0 0% 100%;
-  --muted: 0 0% 11%;                   /* Brushed steel muted */
-  --muted-foreground: 195 8% 48%;      /* Silver-gray text */
-  --accent: 15 85% 58%;                /* Copper/rust accent */
+  --muted: 60 4% 16%;                   /* Muted surface */
+  --muted-foreground: 50 10% 52%;       /* Silver-gray muted text */
+  --accent: 82 20% 45%;                 /* Anthropic green #788c5d */
   --accent-foreground: 0 0% 100%;
   --destructive: 0 72% 58%;
   --destructive-foreground: 0 0% 100%;
-  --border: 195 10% 14%;              /* Metal border */
-  --input: 195 8% 10%;
-  --ring: 175 70% 50%;
+  --border: 60 6% 18%;                  /* Warm border */
+  --input: 60 4% 14%;
+  --ring: 210 45% 61%;
   --radius: 0.75rem;
   --sidebar-width: 280px;
   --header-height: 64px;
 
-  /* Accent palette */
-  --teal-soft: 175 55% 65%;
-  --teal-bright: 175 75% 55%;
-  --purple-soft: 265 50% 65%;
-  --copper: 20 75% 55%;
+  /* Accent palette — Anthropic */
+  --teal-soft: 210 35% 68%;
+  --teal-bright: 210 50% 65%;
+  --purple-soft: 15 55% 65%;
+  --copper: 82 22% 48%;
 
   /* Metal texture simulation */
   --metal-shine: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, transparent 50%, rgba(255,255,255,0.02) 100%);
@@ -73,27 +75,27 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ─── Light Theme ────────────────────────────────────────────── */
+/* ─── Anthropic Brand Light Theme ────────────────────────────── */
 .light {
-  --background: 40 30% 96%;            /* Warm cream-white */
-  --foreground: 0 0% 12%;              /* Near-black text */
-  --card: 40 25% 98%;
-  --card-foreground: 0 0% 12%;
-  --popover: 40 25% 98%;
-  --popover-foreground: 0 0% 12%;
-  --primary: 175 65% 35%;              /* Teal for light bg */
+  --background: 50 30% 97%;            /* Anthropic #faf9f5 warm cream */
+  --foreground: 60 8% 12%;             /* Near-black text */
+  --card: 50 25% 99%;
+  --card-foreground: 60 8% 12%;
+  --popover: 50 25% 99%;
+  --popover-foreground: 60 8% 12%;
+  --primary: 210 40% 50%;              /* Anthropic blue (lighter for contrast) */
   --primary-foreground: 0 0% 100%;
-  --secondary: 265 55% 45%;
+  --secondary: 15 55% 50%;             /* Anthropic orange */
   --secondary-foreground: 0 0% 100%;
-  --muted: 40 15% 90%;
-  --muted-foreground: 0 0% 45%;
-  --accent: 15 75% 48%;
+  --muted: 50 10% 92%;
+  --muted-foreground: 60 5% 42%;
+  --accent: 82 18% 42%;                /* Anthropic green */
   --accent-foreground: 0 0% 100%;
   --destructive: 0 65% 50%;
   --destructive-foreground: 0 0% 100%;
-  --border: 40 15% 85%;
-  --input: 40 15% 92%;
-  --ring: 175 65% 35%;
+  --border: 50 12% 86%;
+  --input: 50 12% 93%;
+  --ring: 210 40% 50%;
   --metal-shine: linear-gradient(135deg, rgba(0,0,0,0.02) 0%, transparent 50%, rgba(0,0,0,0.01) 100%);
 }
 
@@ -103,7 +105,11 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    font-family: 'Futura', 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Lora', 'Georgia', serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', 'Futura', system-ui, sans-serif;
   }
 
   ::selection { @apply bg-primary/25 text-foreground; }

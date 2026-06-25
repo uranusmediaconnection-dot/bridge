@@ -16,18 +16,21 @@ ENV/
 .idea/
 *.swp
 *.swo
-*~
 
 # Environment
 .env
 .env.local
 .env.*
 
-# Database
-database.db
-
 # Build artifacts
-tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Node
+node_modules/
+.next/
+
+# Python
+backend/venv/
 
 # Output
 output/
@@ -47,8 +50,30 @@ out/
 ds-bundle/
 .design-sync/
 
-# Claude internal files
+# Agent config & cache directories
 .claude/
+.agent/
+.agent-mem/
+.autoclaw/
+.brainsync/
+.clinerules/
+.codex/
+.cursor/
+.cursorrules
+.gemini/
+.kilo/
+.kilocode/
+.kilocodemodes
+.kiro/
+.qodo/
+.windsurf/
+.windsurfrules
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+
+# Workspace
+*.code-workspace
 
 # Playwright test artifacts
 .playwright-mcp/
@@ -58,6 +83,13 @@ ds-bundle/
 
 # Generated AI images
 Gemini_Generated_Image_*.jpg
+
+# Stray tilde directory
+~/
+
+# Python cache
+__pycache__/
+*.pyc
 
 # OS junk
 $null

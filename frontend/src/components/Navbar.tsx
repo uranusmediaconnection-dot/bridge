@@ -11,6 +11,7 @@ import {
   Code,
   Cpu,
   Users,
+  Sparkles,
 } from "lucide-react";
 import { EyeLogo } from "./EyeLogo";
 
@@ -88,6 +89,13 @@ export function Navbar({ activeTab, onTabChange, isProcessing, onProvidersClick 
             >
               <Cpu className="w-3 h-3" />
               Providers
+            </button>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent("open-ai-chat"))}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.05] transition-all duration-150 border border-white/[0.05]"
+            >
+              <Sparkles className="w-3 h-3" />
+              AI Chat
             </button>
             <ThemeToggle />
             <div className="w-px h-5 bg-border" />

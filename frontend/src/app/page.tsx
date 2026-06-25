@@ -4,12 +4,13 @@ import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Navbar, TabKey } from "../components/Navbar";
 import { ProvidersSlidebar } from "../components/ProvidersSlidebar";
-import { OctopusAnimation } from "../components/OctopusAnimation";
+import { AIChat } from "../components/AIChat";
+import { GeometricFlowAnimation } from "../components/GeometricFlowAnimation";
 import { Bot, Cpu } from "lucide-react";
 import { SearchPanel } from "../components/SearchPanel";
 import { SwarmDashboard } from "../components/SwarmDashboard";
 import { LeadIntelPanel } from "../components/LeadIntelPanel";
-import { ScrapeResponse, SearchResult } from "../lib/api";
+import type { ScrapeResponse, SearchResult } from "../lib/api";
 import {
   Code,
   Github,
@@ -24,13 +25,21 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [providersOpen, setProvidersOpen] = useState(false);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
       setShowScrollTop(window.scrollY > 400);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    const handleOpenAIChat = () => setAiChatOpen(true);
+    window.addEventListener("open-ai-chat", handleOpenAIChat);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("open-ai-chat", handleOpenAIChat);
+    };
   }, []);
 
   const handleScrapeComplete = useCallback((result: ScrapeResponse) => {
@@ -65,7 +74,7 @@ export default function Home() {
               transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
             >
               <div className="mb-4">
-                <OctopusAnimation />
+                <GeometricFlowAnimation />
               </div>
               <SwarmDashboard onComplete={(r) => setScrapeResult(null)} />
             </motion.div>
@@ -103,6 +112,9 @@ export default function Home() {
 
       {/* Providers Slidebar */}
       <ProvidersSlidebar isOpen={providersOpen} onClose={() => setProvidersOpen(false)} />
+
+      {/* AI Chat */}
+      <AIChat isOpen={aiChatOpen} onClose={() => setAiChatOpen(false)} />
 
       {/* Footer */}
       <footer className="border-t border-white/[0.04] mt-12">

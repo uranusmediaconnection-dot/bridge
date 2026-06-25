@@ -44,13 +44,13 @@ describe("SearchPanel", () => {
 
   it("renders both search buttons", () => {
     render(<SearchPanel {...defaultProps} />);
-    expect(screen.getByText("Search")).toBeDefined();
+    expect(screen.getByText(/Search Google/)).toBeDefined();
     expect(screen.getByText("Search All")).toBeDefined();
   });
 
   it("disables buttons when query is empty", () => {
     render(<SearchPanel {...defaultProps} />);
-    const searchButton = screen.getByText("Search").closest("button");
+    const searchButton = screen.getByText(/Search Google/).closest("button");
     const searchAllButton = screen.getByText("Search All").closest("button");
     expect(searchButton?.disabled).toBe(true);
     expect(searchAllButton?.disabled).toBe(true);
@@ -60,7 +60,7 @@ describe("SearchPanel", () => {
     render(<SearchPanel {...defaultProps} />);
     const input = screen.getByPlaceholderText("Enter your search query...");
     fireEvent.change(input, { target: { value: "test" } });
-    const searchButton = screen.getByText("Search").closest("button");
+    const searchButton = screen.getByText(/Search Google/).closest("button");
     expect(searchButton?.disabled).toBe(false);
   });
 

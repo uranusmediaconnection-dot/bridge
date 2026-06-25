@@ -21,6 +21,7 @@ from backend.scrapers.stealth_scraper import StealthScraper
 from backend.search.search_engines import SearchService
 from backend.proxy.proxy_router import proxy_router, ProxyConfig as BackendProxyConfig, ProxyType
 from backend.proxy.free_proxies import proxy_pool
+from backend.routes.ai_chat import router as ai_chat_router
 
 app = FastAPI(
     title="Web Scraper API",
@@ -433,6 +434,10 @@ async def list_providers():
         },
     ]
     return {"success": True, "providers": providers}
+
+
+# Include routers
+app.include_router(ai_chat_router)
 
 
 if __name__ == "__main__":

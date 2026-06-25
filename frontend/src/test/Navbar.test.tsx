@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { Navbar } from "../components/Navbar";
 
 // Mock next-themes
@@ -84,9 +84,10 @@ describe("Navbar", () => {
     expect(apiLink?.getAttribute("href")).toBe("http://127.0.0.1:8000/docs");
   });
 
-  it("renders the theme toggle button", () => {
+  it("renders the theme toggle button", async () => {
     render(<Navbar {...defaultProps} />);
-    const toggle = screen.getByTestId("theme-toggle");
-    expect(toggle).toBeDefined();
+    const toggles = await waitFor(() => screen.getAllByTestId("theme-toggle"));
+    // Navbar renders 2 toggles (mobile and desktop)
+    expect(toggles.length).toBeGreaterThan(0);
   });
 });
