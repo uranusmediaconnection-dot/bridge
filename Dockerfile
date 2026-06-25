@@ -4,6 +4,7 @@ WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install --legacy-peer-deps
 COPY frontend/ .
+RUN mkdir -p /app/frontend/public
 RUN npm run build
 
 # Stage 2: Python backend
@@ -16,19 +17,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ backend/
 COPY --from=frontend-build /app/frontend/.next/standalone /app
 COPY --from=frontend-build /app/frontend/.next/static /app/.next/static
-COPY --from=frontend-build /app/frontend/public /app/public
+RUN mkdir -p /app/public
 
 # Create startup script
 RUN echo '#!/bin/bash\n\
-# Start Python backend on port 8000\n\
-cd /app/backend && python -m uvicorn main:app --host 0.0.0.0 --port 8000 --no-access-log &\n\
+cd /app/backend && python -m uvicorn main:app --host 0.0.0.0 --port 8000 --no-access-log --forwarded-allow-ips="*" &\n\
 BACKEND_PID=$!\n\
 sleep 2\n\
-# Start Next.js on port 7860\n\
 cd /app && NODE_ENV=production node server.js &\n\
 NEXT_PID=$!\n\
 echo "Backend PID: $BACKEND_PID, Next.js PID: $NEXT_PID"\n\
-# Wait for either to exit\n\
 wait -n $BACKEND_PID $NEXT_PID\n\
 ' > /app/start.sh && chmod +x /app/start.sh
 
