@@ -465,11 +465,8 @@ async def list_providers():
 
 @app.on_event("startup")
 async def startup():
-    """Initialise Supabase client on application start."""
-    from backend.database.supabase_client import init_supabase
-    init_supabase()
-    # Log the database status without importing operations yet
-    from backend.database import supabase_available
+    """Log Supabase status on application start (client initialises at import)."""
+    from backend.database.supabase_client import supabase_available
     if supabase_available():
         print("[startup] Supabase connected")
     else:
