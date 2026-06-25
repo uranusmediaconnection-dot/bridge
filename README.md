@@ -7,7 +7,7 @@ sdk: docker
 app_port: 7860
 pinned: false
 license: mit
-short_description: Professional web scraping tool with AI-powered features, lead enrichment, and swarm intelligence.
+short_description: Web scraper with AI lead enrichment and swarm intelligence
 ---
 
 # Bridgenton - The Web Scraper App of the Year 🌐
