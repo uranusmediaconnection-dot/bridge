@@ -100,7 +100,7 @@ export function Navbar({ activeTab, onTabChange, isProcessing, onProvidersClick 
             <ThemeToggle />
             <div className="w-px h-5 bg-border" />
             <a
-              href="http://127.0.0.1:8000/docs"
+              href="https://sitcod3-bridgenton.hf.space/docs"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.05] transition-all duration-150 border border-white/[0.05]"

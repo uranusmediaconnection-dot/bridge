@@ -81,7 +81,7 @@ describe("Navbar", () => {
     render(<Navbar {...defaultProps} />);
     const apiLink = screen.getByText("API Docs").closest("a");
     expect(apiLink).toBeDefined();
-    expect(apiLink?.getAttribute("href")).toBe("http://127.0.0.1:8000/docs");
+    expect(apiLink?.getAttribute("href")).toBe("https://sitcod3-bridgenton.hf.space/docs");
   });
 
   it("renders the theme toggle button", async () => {

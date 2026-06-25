@@ -23,6 +23,7 @@ from backend.search.search_engines import SearchService
 from backend.proxy.proxy_router import proxy_router, ProxyConfig as BackendProxyConfig, ProxyType
 from backend.proxy.free_proxies import proxy_pool
 from backend.routes.ai_chat import router as ai_chat_router
+from backend.database.supabase_client import check_connection as check_supabase
 
 app = FastAPI(
     title="Web Scraper API",
@@ -150,8 +151,14 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint."""
-    return {"status": "healthy", "version": "2.0.0"}
+    """Health check endpoint with Supabase connection status."""
+    db = check_supabase()
+    return {
+        "status": "healthy",
+        "version": "2.0.0",
+        "database": "connected" if db["connected"] else "disconnected",
+        "database_error": db.get("error"),
+    }
 
 
 @app.post("/scrape", response_model=ScrapeResponse)
@@ -518,29 +525,6 @@ async def get_swarms(limit: int = 10):
         return {"success": True, "swarms": swarms}
     except Exception as exc:
         return {"success": False, "error": str(exc)}
-
-
-# ============================================================
-# Updated /health endpoint with DB status
-# ============================================================
-
-@app.get("/health", include_in_schema=False)
-async def health_check_extended():
-    """Health check — includes database connectivity."""
-    from backend.database.supabase_client import supabase_available
-    db_status = "connected" if supabase_available() else "not_configured"
-    if supabase_available():
-        try:
-            from backend.database import operations as db_ops
-            db_ops.get_scrape_history(limit=1)
-            db_status = "connected"
-        except Exception:
-            db_status = "error"
-    return {
-        "status": "healthy",
-        "version": "2.0.0",
-        "database": db_status,
-    }
 
 
 # Include routers

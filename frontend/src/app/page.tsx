@@ -143,7 +143,7 @@ export default function Home() {
               <ul className="space-y-1.5">
                 <li>
                   <a
-                    href="http://127.0.0.1:8000/docs"
+                    href="https://sitcod3-bridgenton.hf.space/docs"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors duration-150"

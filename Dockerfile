@@ -20,12 +20,12 @@ COPY --from=frontend-build /app/frontend/.next/standalone /app
 COPY --from=frontend-build /app/frontend/.next/static /app/.next/static
 RUN mkdir -p /app/public
 
-# Create startup script — reads env vars from HF Secrets
+# Create startup script — reads env vars from HF Secrets (mounted at /etc/secrets/)
 RUN echo '#!/bin/bash\n\
 # Export HF Secrets as env vars if present\n\
 if [ -f /etc/secrets/SUPABASE_URL ]; then\n\
   export SUPABASE_URL=$(cat /etc/secrets/SUPABASE_URL)\n\
-  export SUPABASE_SERVICE_KEY=$(cat /etc/secrets/SUPABASE_SERVICE_KEY)\n\
+  export SUPABASE_SECRET_KEY=$(cat /etc/secrets/SUPABASE_SECRET_KEY)\n\
   export OPENROUTER_API_KEY=$(cat /etc/secrets/OPENROUTER_API_KEY 2>/dev/null || echo "")\n\
   echo "Loaded secrets from /etc/secrets/"\n\
 fi\n\
