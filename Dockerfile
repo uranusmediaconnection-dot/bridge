@@ -26,6 +26,7 @@ RUN echo '#!/bin/bash\n\
 if [ -f /etc/secrets/SUPABASE_URL ]; then\n\
   export SUPABASE_URL=$(cat /etc/secrets/SUPABASE_URL)\n\
   export SUPABASE_SECRET_KEY=$(cat /etc/secrets/SUPABASE_SECRET_KEY)\n\
+  export SUPABASE_PUBLISHABLE_KEY=$(cat /etc/secrets/SUPABASE_PUBLISHABLE_KEY 2>/dev/null || echo "")\n\
   export OPENROUTER_API_KEY=$(cat /etc/secrets/OPENROUTER_API_KEY 2>/dev/null || echo "")\n\
   echo "Loaded secrets from /etc/secrets/"\n\
 fi\n\
@@ -42,4 +43,5 @@ EXPOSE 7860
 ENV PORT=7860
 ENV HOSTNAME=0.0.0.0
 
+# HuggingFace Spaces uses PORT env variable (default 7860)
 CMD ["/app/start.sh"]

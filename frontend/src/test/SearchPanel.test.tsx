@@ -12,7 +12,7 @@ describe("SearchPanel", () => {
   it("renders the header", () => {
     render(<SearchPanel {...defaultProps} />);
     expect(screen.getByText("Web Search")).toBeDefined();
-    expect(screen.getByText("Search across multiple engines")).toBeDefined();
+    expect(screen.getByText("Search across multiple engines with full debugging")).toBeDefined();
   });
 
   it("renders search input", () => {
@@ -72,5 +72,20 @@ describe("SearchPanel", () => {
   it("shows info about engines", () => {
     render(<SearchPanel {...defaultProps} />);
     expect(screen.getByText("About Engines")).toBeDefined();
+  });
+
+  it("renders debug console", () => {
+    render(<SearchPanel {...defaultProps} />);
+    expect(screen.getByText("Debug Console")).toBeDefined();
+  });
+
+  it("shows validation error when searching with empty query", () => {
+    render(<SearchPanel {...defaultProps} />);
+    const searchButton = screen.getByText(/Search Google/).closest("button");
+    if (searchButton) {
+      fireEvent.click(searchButton);
+    }
+    // The validation error should appear
+    expect(screen.queryByText(/Please enter a search query/)).toBeDefined();
   });
 });

@@ -39,3 +39,26 @@ Object.defineProperty(window, "matchMedia", {
     dispatchEvent: vi.fn(),
   })),
 });
+
+// Mock localStorage
+const localStorageMock = {
+  getItem: vi.fn(() => null),
+  setItem: vi.fn(),
+  removeItem: vi.fn(),
+  clear: vi.fn(),
+  length: 0,
+  key: vi.fn(),
+};
+Object.defineProperty(window, "localStorage", {
+  writable: true,
+  value: localStorageMock,
+});
+
+// Mock navigator.clipboard
+Object.defineProperty(navigator, "clipboard", {
+  writable: true,
+  value: {
+    writeText: vi.fn(() => Promise.resolve()),
+    readText: vi.fn(() => Promise.resolve("")),
+  },
+});

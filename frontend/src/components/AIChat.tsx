@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, User, X, Sparkles } from "lucide-react";
 
@@ -12,38 +12,102 @@ interface Message {
 interface Model {
   id: string;
   name: string;
+  provider: string;
   free: boolean;
 }
 
-export function AIChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+interface ProviderModels {
+  provider: string;
+  models: Model[];
+}
+
+interface AIChatProps {
+  isOpen: boolean;
+  onClose: () => void;
+  apiKeys?: Record<string, string>;
+}
+
+export function AIChat({ isOpen, onClose, apiKeys = {} }: AIChatProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState("meta-llama/llama-3.1-8b-instruct");
-  const [models, setModels] = useState<Model[]>([]);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [allModels, setAllModels] = useState<Model[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    fetchModels();
-  }, []);
-
+  // Fetch models when component opens or API keys change
   useEffect(() => {
     if (isOpen) {
+      fetchModels();
       scrollToBottom();
     }
-  }, [messages, isOpen]);
+  }, [isOpen, apiKeys]);
 
-  const fetchModels = async () => {
+  const fetchModels = useCallback(async () => {
+    const fetched: Model[] = [];
+
+    // Try to get models from backend first
     try {
       const response = await fetch("/api/chat/models");
       const data = await response.json();
-      if (data.success) {
-        setModels(data.models);
+      if (data.success && data.models) {
+        fetched.push(...data.models.map((m: any) => ({ ...m, provider: "OpenRouter" })));
       }
-    } catch (error) {
-      console.error("Failed to fetch models:", error);
+    } catch {
+      // fallback to defaults
     }
-  };
+
+    // Add OpenAI models if key exists
+    if (apiKeys.openai) {
+      try {
+        const response = await fetch("https://api.openai.com/v1/models", {
+          headers: { Authorization: `Bearer ${apiKeys.openai}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          const openaiModels = (data.data || [])
+            .filter((m: any) => m.id.startsWith("gpt") || m.id.startsWith("o"))
+            .map((m: any) => ({
+              id: m.id,
+              name: m.id,
+              provider: "OpenAI",
+              free: false,
+            }));
+          fetched.push(...openaiModels);
+        }
+      } catch {
+        // add defaults
+      }
+      if (!fetched.some((m) => m.provider === "OpenAI")) {
+        fetched.push(
+          { id: "gpt-4o", name: "GPT-4o", provider: "OpenAI", free: false },
+          { id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", free: false },
+        );
+      }
+    }
+
+    // Add Anthropic models if key exists
+    if (apiKeys.anthropic) {
+      fetched.push(
+        { id: "claude-3-5-sonnet-20241022", name: "Claude 3.5 Sonnet", provider: "Anthropic", free: false },
+        { id: "claude-3-haiku-20240307", name: "Claude 3 Haiku", provider: "Anthropic", free: false },
+      );
+    }
+
+    // Default fallback if nothing fetched
+    if (fetched.length === 0) {
+      fetched.push(
+        { id: "meta-llama/llama-3.1-8b-instruct", name: "Llama 3.1 8B", provider: "OpenRouter", free: true },
+        { id: "mistralai/mistral-7b-instruct", name: "Mistral 7B", provider: "OpenRouter", free: true },
+        { id: "google/gemma-2-9b-it", name: "Gemma 2 9B", provider: "OpenRouter", free: true },
+      );
+    }
+
+    setAllModels(fetched);
+    if (fetched.length > 0 && !selectedModel) {
+      setSelectedModel(fetched[0].id);
+    }
+  }, [apiKeys]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,28 +122,81 @@ export function AIChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
     setInput("");
     setLoading(true);
 
+    const selectedModelData = allModels.find((m) => m.id === selectedModel);
+    const provider = selectedModelData?.provider || "OpenRouter";
+
     try {
-      const response = await fetch("/api/chat/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage.content, model: selectedModel }),
-      });
+      let aiResponse = "";
 
-      const data = await response.json();
-
-      if (data.success) {
-        const assistantMessage: Message = { role: "assistant", content: data.response };
-        setMessages((prev) => [...prev, assistantMessage]);
+      if (provider === "OpenRouter") {
+        // Use backend proxy for OpenRouter
+        const response = await fetch("/api/chat/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: userMessage.content, model: selectedModel }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          aiResponse = data.response;
+        } else {
+          aiResponse = `Error: ${data.error || "Unknown error occurred"}`;
+        }
+      } else if (provider === "OpenAI" && apiKeys.openai) {
+        // Direct OpenAI API call
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKeys.openai}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: selectedModel,
+            messages: [
+              { role: "system", content: "You are a helpful AI assistant." },
+              { role: "user", content: userMessage.content },
+            ],
+            temperature: 0.7,
+            max_tokens: 2000,
+          }),
+        });
+        const data = await response.json();
+        if (data.choices?.[0]?.message?.content) {
+          aiResponse = data.choices[0].message.content;
+        } else {
+          aiResponse = `Error: ${data.error?.message || "Request failed"}`;
+        }
+      } else if (provider === "Anthropic" && apiKeys.anthropic) {
+        // Direct Anthropic API call
+        const response = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "x-api-key": apiKeys.anthropic,
+            "anthropic-version": "2023-06-01",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: selectedModel,
+            max_tokens: 2000,
+            system: "You are a helpful AI assistant.",
+            messages: [{ role: "user", content: userMessage.content }],
+          }),
+        });
+        const data = await response.json();
+        if (data.content?.[0]?.text) {
+          aiResponse = data.content[0].text;
+        } else {
+          aiResponse = `Error: ${data.error?.message || "Request failed"}`;
+        }
       } else {
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: `Error: ${data.error || "Unknown error occurred"}` },
-        ]);
+        aiResponse = `Error: No API key configured for ${provider}. Please add your API key in the Providers panel.`;
       }
+
+      const assistantMessage: Message = { role: "assistant", content: aiResponse };
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Error: Failed to connect to AI service" },
+        { role: "assistant", content: "Error: Failed to connect to AI service. Please check your connection and API keys." },
       ]);
     } finally {
       setLoading(false);
@@ -107,7 +224,7 @@ export function AIChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed top-0 right-0 h-full w-[var(--sidebar-width)] max-w-md z-50 flex flex-col"
+            className="fixed top-0 right-0 h-full w-full max-w-md z-50 flex flex-col"
             style={{ backgroundColor: "hsl(var(--card))", borderLeft: "1px solid hsl(var(--border))" }}
           >
             {/* Header */}
@@ -118,7 +235,11 @@ export function AIChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-foreground">AI Assistant</h2>
-                  <p className="text-[10px] text-muted-foreground">Powered by OpenRouter</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {apiKeys.openai || apiKeys.anthropic || apiKeys.openrouter
+                      ? "Connected to your providers"
+                      : "Add API keys in Providers panel"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
@@ -146,9 +267,9 @@ export function AIChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                 className="w-full px-3 py-2 rounded-lg border text-xs bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                 style={{ borderColor: "hsl(var(--border))" }}
               >
-                {models.map((model) => (
+                {allModels.map((model) => (
                   <option key={model.id} value={model.id}>
-                    {model.name} ({model.free ? "FREE" : "PAID"})
+                    [{model.provider}] {model.name} {model.free ? "(FREE)" : ""}
                   </option>
                 ))}
               </select>
@@ -160,7 +281,11 @@ export function AIChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                   <Bot className="w-12 h-12 mb-3 opacity-50" />
                   <p className="text-sm">Start a conversation with AI</p>
-                  <p className="text-[10px] mt-1">Free models available via OpenRouter</p>
+                  <p className="text-[10px] mt-1">
+                    {Object.keys(apiKeys).length > 0
+                      ? `${Object.keys(apiKeys).length} provider(s) configured`
+                      : "Add API keys in Providers panel to get started"}
+                  </p>
                 </div>
               )}
 
@@ -178,7 +303,7 @@ export function AIChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                   )}
 
                   <div
-                    className={`max-w-[80%] px-3 py-2 rounded-lg text-xs ${
+                    className={`max-w-[80%] px-3 py-2 rounded-lg text-xs whitespace-pre-wrap ${
                       message.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "bg-muted border"
@@ -230,6 +355,7 @@ export function AIChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                   type="submit"
                   disabled={!input.trim() || loading}
                   className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  title="Send"
                 >
                   <Send className="w-4 h-4" />
                 </button>

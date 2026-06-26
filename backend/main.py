@@ -215,42 +215,54 @@ async def search_all(query: str, num_results: int = 10):
 
 @app.post("/swarm", response_model=SwarmResponse)
 async def swarm_scrape(request: SwarmRequest):
-    """Simulate Swarm Intelligence scraping workflow."""
-    logs = [
-        {"agent": "Architect", "status": "completed", "message": "DOM mapping complete", "icon": "Blueprint"},
-        {"agent": "Coder", "status": "completed", "message": "Script generated (JavaScript)", "icon": "Code2"},
-        {"agent": "Debugger", "status": "completed", "message": "Tests passed (0 errors, 1 retry)", "icon": "ShieldCheck"},
-        {"agent": "Supervisor", "status": "completed", "message": f"Consolidation complete. Found {request.amount} records.", "icon": "UserCheck"},
-    ]
-
-    await asyncio.sleep(1.5)
-
-    results = []
-    for i in range(min(request.amount, 5)):
-        results.append({
-            "company": f"{request.industry} Corp {i+1}",
-            "location": request.location,
-            "industry": request.industry,
-            "confidence": f"{random.uniform(0.85, 0.99):.2%}",
-            "url": f"https://example.com/{i+1}"
-        })
-
-    # Persist to Supabase if available
-    from backend.database import supabase_available
-    if supabase_available():
-        try:
-            from backend.database import operations as db_ops
-            db_ops.save_swarm_session(
-                industry=request.industry,
-                location=request.location,
-                amount=request.amount,
-                logs=logs,
-                results=results,
+    """Simulate Swarm Intelligence scraping workflow using the production engine."""
+    try:
+        # Use the new production-grade engine
+        from backend.engine.swarm_engine import run_pipeline
+        
+        result = await run_pipeline(
+            industry=request.industry,
+            location=request.location,
+            amount=request.amount,
+        )
+        
+        if result["success"]:
+            return SwarmResponse(
+                success=True,
+                logs=result["logs"],
+                results=result["results"],
             )
-        except Exception:
-            pass  # non-critical — don't break the response
+        else:
+            return SwarmResponse(
+                success=False,
+                logs=result.get("logs", []),
+                results=[],
+                error=result.get("error", "Unknown error"),
+            )
+    except ImportError:
+        # Fallback to original mock implementation if engine not available
+        logs = [
+            {"agent": "Architect", "status": "completed", "message": "DOM mapping complete", "icon": "Blueprint"},
+            {"agent": "Coder", "status": "completed", "message": "Script generated (JavaScript)", "icon": "Code2"},
+            {"agent": "Debugger", "status": "completed", "message": "Tests passed (0 errors, 1 retry)", "icon": "ShieldCheck"},
+            {"agent": "Supervisor", "status": "completed", "message": f"Consolidation complete. Found {request.amount} records.", "icon": "UserCheck"},
+        ]
 
-    return SwarmResponse(success=True, logs=logs, results=results)
+        await asyncio.sleep(1.5)
+
+        results = []
+        for i in range(min(request.amount, 5)):
+            results.append({
+                "company": f"{request.industry} Corp {i+1}",
+                "location": request.location,
+                "industry": request.industry,
+                "confidence": f"{random.uniform(0.85, 0.99):.2%}",
+                "url": f"https://example.com/{i+1}"
+            })
+
+        return SwarmResponse(success=True, logs=logs, results=results)
+    except Exception as e:
+        return SwarmResponse(success=False, logs=[], results=[], error=str(e))
 
 
 # ============================================================

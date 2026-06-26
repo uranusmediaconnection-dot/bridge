@@ -26,6 +26,7 @@ export default function Home() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [providersOpen, setProvidersOpen] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const handleScroll = () => {
@@ -36,11 +37,23 @@ export default function Home() {
     const handleOpenAIChat = () => setAiChatOpen(true);
     window.addEventListener("open-ai-chat", handleOpenAIChat);
 
+    // Load saved API keys
+    const saved = localStorage.getItem("provider-api-keys");
+    if (saved) {
+      try {
+        setApiKeys(JSON.parse(saved));
+      } catch { /* ignore */ }
+    }
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("open-ai-chat", handleOpenAIChat);
     };
   }, []);
+
+  const handleApiKeysChange = (keys: Record<string, string>) => {
+    setApiKeys(keys);
+  };
 
   const handleScrapeComplete = useCallback((result: ScrapeResponse) => {
     setScrapeResult(result);
@@ -111,10 +124,10 @@ export default function Home() {
       </main>
 
       {/* Providers Slidebar */}
-      <ProvidersSlidebar isOpen={providersOpen} onClose={() => setProvidersOpen(false)} />
+      <ProvidersSlidebar isOpen={providersOpen} onClose={() => setProvidersOpen(false)} onApiKeysChange={handleApiKeysChange} />
 
       {/* AI Chat */}
-      <AIChat isOpen={aiChatOpen} onClose={() => setAiChatOpen(false)} />
+      <AIChat isOpen={aiChatOpen} onClose={() => setAiChatOpen(false)} apiKeys={apiKeys} />
 
       {/* Footer */}
       <footer className="border-t border-white/[0.04] mt-12">

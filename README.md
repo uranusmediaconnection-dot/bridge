@@ -1,22 +1,46 @@
 ---
-title: Bridgenton Web Scraper
-emoji: 🌐
+title: Bridgenton Web Intelligence Suite
+emoji: 🐙
 colorFrom: purple
-colorTo: indigo
+colorTo: cyan
 sdk: docker
 app_port: 7860
 pinned: false
 license: mit
-short_description: Web scraper with AI lead enrichment and swarm intelligence
+short_description: AI-powered web intelligence suite with swarm scraping, lead enrichment, and multi-provider AI chat
+tags:
+  - web-scraping
+  - ai
+  - lead-generation
+  - data-extraction
+  - supabase
+  - openrouter
 ---
 
-# Bridgenton - The Web Scraper App of the Year 🌐
+# Bridgenton - The Web Scraper App of the Year 🐙
 
-A professional web scraping application with a modern **Hero UI PRO Dark theme** frontend, built with Python and Next.js.
+A professional web intelligence application with a modern **dark theme** frontend, built with Python (FastAPI) and Next.js. Connected to **Supabase** (Postgres) for data persistence.
 
-![Web Scraper Tool](https://img.shields.io/badge/version-1.0.0-blue)
-![Python](https://img.shields.io/badge/python-3.8+-green)
+![Web Scraper Tool](https://img.shields.io/badge/version-2.0.0-blue)
+![Python](https://img.shields.io/badge/python-3.11+-green)
 ![License](https://img.shields.io/badge/license-MIT-blue)
+
+## Quick Deploy
+
+### HuggingFace Spaces
+1. Fork this repo
+2. Create new Space at https://huggingface.co/new-space
+3. Select **Docker** SDK, link your fork
+4. Add repository secrets (see below)
+5. Deploy!
+
+### GitHub Secrets Required
+| Secret | Source | Description |
+|--------|--------|-------------|
+| `SUPABASE_URL` | [Supabase Dashboard](https://supabase.com/dashboard/project/zxsaapxgoyugvicrdhja/settings/api) | Project URL |
+| `SUPABASE_SECRET_KEY` | Supabase Dashboard → API | service_role key |
+| `SUPABASE_PUBLISHABLE_KEY` | Supabase Dashboard → API | publishable/anon key |
+| `OPENROUTER_API_KEY` | [OpenRouter](https://openrouter.ai/keys) | AI chat fallback key |
 
 ## Features
 
